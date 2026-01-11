@@ -1,0 +1,13 @@
+{
+  "name": "sindri-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sindri-aligned PO prototype for future integration",
+  "scripts": {
+    "dev": "echo 'This prototype shares dependencies with parent project. Run from parent directory.'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "NOTE": "Dependencies are shared with the parent purchase-order-clone project"
+  }
+}
