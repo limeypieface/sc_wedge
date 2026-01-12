@@ -35,10 +35,11 @@
  * ```
  */
 
-import { Card, CardContent, CardHeader, CardTitle, Badge, Separator } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle, Separator, StatusPill } from "@/components/ui";
 
 import { useSalesOrder } from "../../_lib/contexts";
-import { SORevisionStatus, SORevisionStatusMeta } from "@/types/enums";
+import { SORevisionStatus } from "@/types/enums/so-revision-status";
+import { SO_REVISION_STATUS_CONFIG, getSORevisionStatusBorderClass } from "@/components/so";
 import { cn } from "@/lib/utils";
 
 import { WorkflowProgress } from "./workflow-progress";
@@ -80,19 +81,20 @@ export function SOStatusPanel({
 
   // Map string status to enum
   const statusKey = pendingDraftRevision.status as SORevisionStatus;
-  const statusMeta = SORevisionStatusMeta.meta[statusKey];
   const isApprover = currentUser.isApprover;
 
   return (
-    <Card className={cn("border-l-4", statusMeta?.borderClass)}>
+    <Card className={cn("border-l-4", getSORevisionStatusBorderClass(statusKey))}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">
             Revision v{pendingDraftRevision.version}
           </CardTitle>
-          <Badge variant="outline" className={statusMeta?.className}>
-            {statusMeta?.label || pendingDraftRevision.status}
-          </Badge>
+          <StatusPill
+            status={statusKey}
+            config={SO_REVISION_STATUS_CONFIG}
+            size="md"
+          />
         </div>
       </CardHeader>
 

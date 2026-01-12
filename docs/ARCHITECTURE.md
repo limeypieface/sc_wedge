@@ -162,6 +162,117 @@ ApprovalConfig = {
 - Changes within threshold: Can skip approval
 - Changes exceeding threshold: Must go through approval chain
 
+## Line Types
+
+### Type Discrimination
+
+Lines are classified by `LineType` to handle different workflows:
+
+```typescript
+enum LineType {
+  Item = "ITEM",       // Physical goods - uses receiving workflow
+  Service = "SERVICE", // Services - uses completion workflow
+  NRE = "NRE",        // Non-Recurring Engineering - special service type
+}
+```
+
+### Item Lines vs Service Lines
+
+| Aspect | Item Lines | Service Lines |
+|--------|------------|---------------|
+| Receiving | Physical receipt tracking | N/A |
+| Progress | Quantity received | Percentage/units consumed |
+| Completion | Fully received | Status: Completed/Approved |
+| Billing | On receipt | Fixed/T&M/Milestone |
+
+### Service Line Status Flow
+
+```
+┌─────────────┐   ┌─────────────┐   ┌──────────────────┐   ┌───────────┐   ┌───────────┐
+│ NotStarted  │──>│ InProgress  │──>│ PendingApproval  │──>│ Approved  │──>│ Completed │
+└─────────────┘   └─────────────┘   └──────────────────┘   └───────────┘   └───────────┘
+                        │                                         │
+                        │ OnHold                                  │
+                        ▼                                         │
+                  ┌──────────┐                                    │
+                  │  OnHold  │────────────────────────────────────┘
+                  └──────────┘
+```
+
+### Service Billing Types
+
+```typescript
+enum ServiceBillingType {
+  FixedPrice = "FIXED_PRICE",        // Single total amount
+  TimeAndMaterials = "T_AND_M",      // Rate * consumed units
+  Milestone = "MILESTONE",           // Payment per milestone completion
+}
+```
+
+## Blanket PO Architecture
+
+### PO Type Discrimination
+
+```typescript
+enum POType {
+  Standard = "STANDARD",  // Regular one-time PO
+  Blanket = "BLANKET",   // Authorization for ongoing releases
+  Release = "RELEASE",   // Individual release from blanket
+}
+```
+
+### Blanket PO Structure
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    BLANKET PO (Parent)                       │
+│  - Authorized Total: $500,000                               │
+│  - Effective: Jan 1 - Dec 31                                │
+│  - Per-Release Limit: $50,000                               │
+├─────────────────────────────────────────────────────────────┤
+│  Utilization:                                               │
+│  ┌─────────┬─────────┬──────────┬───────────┐              │
+│  │Consumed │Released │Committed │ Available │              │
+│  │ $98,000 │$125,000 │ $75,000  │ $300,000  │              │
+│  └─────────┴─────────┴──────────┴───────────┘              │
+├─────────────────────────────────────────────────────────────┤
+│  Line Items (Available for Release):                        │
+│  - Item A: 1000 units @ $50 (500 available)                 │
+│  - Item B: 500 units @ $100 (250 available)                 │
+│  - Service C: NRE @ $15,000 (1 available)                   │
+└─────────────────────────────────────────────────────────────┘
+           │
+           │ Create Release
+           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    RELEASE PO (Child)                        │
+│  - Parent: BPO-2026-0001                                    │
+│  - Release #: 6                                             │
+│  - Amount: $25,000                                          │
+│  - Lines selected from parent                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Utilization Calculation
+
+```typescript
+interface BlanketUtilization {
+  committed: number;   // Unreleased line amounts on blanket
+  released: number;    // Sum of all release totals
+  consumed: number;    // Invoiced/paid against releases
+  available: number;   // authorizedTotal - released - committed
+  releaseCount: number;
+}
+```
+
+### Release Validation
+
+Before creating a release:
+1. Check blanket is not expired
+2. Validate release amount <= per-release limit
+3. Verify release amount <= available balance
+4. Check release count < max releases (if configured)
+
 ## File Organization
 
 ```
@@ -179,7 +290,8 @@ src/app/supply/purchase-orders/
 │   ├── contexts/
 │   │   └── revision-context.tsx
 │   ├── types/
-│   │   ├── purchase-order.types.ts
+│   │   ├── purchase-order.types.ts   # Extended with service fields
+│   │   ├── blanket-po.types.ts       # Blanket PO types
 │   │   ├── approval.types.ts
 │   │   └── revision.types.ts
 │   └── utils/
@@ -189,6 +301,32 @@ src/app/supply/purchase-orders/
 ├── [poNumber]/               # Dynamic route
 │   └── page.tsx
 └── page.tsx                  # List page
+```
+
+### Shared Components
+
+```
+src/components/
+├── service-progress-editor.tsx    # Service progress tracking
+├── milestone-editor.tsx           # Milestone management
+├── blanket-utilization-card.tsx   # Blanket usage visualization
+├── create-release-modal.tsx       # Release creation wizard
+├── release-history-panel.tsx      # Release list with filters
+├── add-line-modal.tsx            # Line creation (includes Service tab)
+├── po-lines-table.tsx            # Lines table (includes services view)
+└── line-display-selector.tsx     # View mode selector
+```
+
+### Enum Files
+
+```
+src/types/enums/
+├── index.ts                  # Re-exports all enums
+├── line-type.ts             # LineType, ServiceBillingType + metadata
+├── service-line-status.ts   # ServiceLineStatus + transitions
+├── po-type.ts               # POType enum
+├── po-status.ts             # POStatus enum
+└── [other-enums].ts
 ```
 
 ## Component Patterns
@@ -235,13 +373,19 @@ if (error) {
 - Adapter functions
 - Utility functions
 - Type validation
+- Service progress calculations
+- Blanket utilization calculations
 
 ### Component Tests
 - Render with mock data
 - User interactions
 - State changes
+- Service line workflows
+- Blanket PO workflows
 
 ### Integration Tests
 - Full workflow (draft → approve → send)
 - Permission checks
 - Error handling
+- Service completion workflow
+- Release creation workflow

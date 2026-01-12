@@ -11,6 +11,12 @@
 
 import { PurchaseOrderStatus } from "@/types/enums";
 import { LineItemStatus } from "@/types/enums";
+import {
+  LineType,
+  ServiceBillingType,
+  ServiceLineStatus,
+  POType,
+} from "@/types/enums";
 
 // ============================================================================
 // VENDOR & SUPPLIER TYPES
@@ -112,6 +118,9 @@ export interface POHeader {
 
   /** Internal notes */
   notes: string;
+
+  /** PO type - defaults to STANDARD if not specified */
+  poType?: POType;
 }
 
 // ============================================================================
@@ -195,6 +204,126 @@ export interface LineItem {
 
   /** Compliance requirements */
   compliance?: ComplianceRequirements;
+
+  // ============================================================================
+  // SERVICE LINE FIELDS (optional - only present for service/NRE lines)
+  // ============================================================================
+
+  /** Line type - defaults to ITEM if not specified */
+  lineType?: LineType;
+
+  /** Service-specific details (only for service/NRE lines) */
+  serviceDetails?: ServiceLineDetails;
+
+  /** Service completion status (only for service/NRE lines) */
+  serviceStatus?: ServiceLineStatus;
+}
+
+// ============================================================================
+// SERVICE LINE TYPES
+// ============================================================================
+
+/**
+ * Progress tracking for service lines
+ *
+ * Tracks both percentage completion and consumed units.
+ * Can auto-calculate percentage from units if needed.
+ */
+export interface ServiceProgress {
+  /** Percentage complete (0-100) */
+  percentComplete: number;
+
+  /** Estimated total hours/units for the work */
+  estimatedUnits: number;
+
+  /** Actually consumed hours/units */
+  consumedUnits: number;
+
+  /** Type of units being tracked */
+  unitType: "hours" | "days" | "units";
+
+  /** When progress was last updated */
+  lastUpdated?: string;
+
+  /** Notes about progress */
+  notes?: string;
+}
+
+/**
+ * Status of a single milestone
+ */
+export type MilestoneStatus = "pending" | "in_progress" | "completed" | "approved";
+
+/**
+ * Individual milestone for milestone-based billing
+ *
+ * Each milestone represents a deliverable with its own payment amount.
+ */
+export interface MilestoneItem {
+  /** Unique milestone ID */
+  id: string;
+
+  /** Milestone name */
+  name: string;
+
+  /** Detailed description */
+  description?: string;
+
+  /** Payment amount for this milestone */
+  amount: number;
+
+  /** Target due date */
+  dueDate?: string;
+
+  /** Current status */
+  status: MilestoneStatus;
+
+  /** When the milestone was completed */
+  completedDate?: string;
+
+  /** Who approved the milestone */
+  approvedBy?: string;
+
+  /** Sequence order */
+  sequence?: number;
+}
+
+/**
+ * Service-specific details for service/NRE line items
+ *
+ * Contains all the information specific to service-type work:
+ * billing configuration, progress tracking, milestones, etc.
+ */
+export interface ServiceLineDetails {
+  /** How the service is billed */
+  billingType: ServiceBillingType;
+
+  /** Service category (NRE, Consulting, etc.) */
+  category: string;
+
+  /** Progress tracking */
+  progress: ServiceProgress;
+
+  /** Milestones (only for milestone billing) */
+  milestones?: MilestoneItem[];
+
+  /** Hourly/daily rate (only for T&M billing) */
+  rate?: number;
+
+  /** Rate unit type */
+  rateUnit?: "hour" | "day" | "unit";
+
+  /** Not-to-exceed amount (only for T&M billing) */
+  nteAmount?: number;
+
+  /** Statement of Work reference */
+  sowReference?: string;
+
+  /** When service work starts */
+  serviceStartDate?: string;
+
+  /** When service work ends */
+  serviceEndDate?: string;
 }
 
 // ============================================================================

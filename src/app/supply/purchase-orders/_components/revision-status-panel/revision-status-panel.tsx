@@ -35,14 +35,13 @@
  * ```
  */
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { StatusPill } from "@/components/ui/status-pill";
 
 import { useRevision } from "../../_lib/contexts";
-import { RevisionStatus, RevisionStatusMeta } from "@/types/enums";
+import { RevisionStatus } from "@/types/enums";
+import { PO_REVISION_STATUS_CONFIG, getRevisionStatusBorderClass } from "@/components/po";
 import { cn } from "@/lib/utils";
 
 import { WorkflowProgress } from "./workflow-progress";
@@ -83,19 +82,20 @@ export function RevisionStatusPanel({
   }
 
   const status = pendingDraftRevision.status;
-  const statusMeta = RevisionStatusMeta.meta[status];
   const isApprover = currentUser.isApprover;
 
   return (
-    <Card className={cn("border-l-4", statusMeta.borderClass)}>
+    <Card className={cn("border-l-4", getRevisionStatusBorderClass(status))}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">
             Revision v{pendingDraftRevision.version}
           </CardTitle>
-          <Badge variant="outline" className={statusMeta.className}>
-            {statusMeta.label}
-          </Badge>
+          <StatusPill
+            status={status}
+            config={PO_REVISION_STATUS_CONFIG}
+            size="md"
+          />
         </div>
       </CardHeader>
 

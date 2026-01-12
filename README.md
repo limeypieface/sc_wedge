@@ -10,6 +10,39 @@ This prototype demonstrates:
 - Vendor communication workflows
 - PDF generation for supplier contracts
 - AI-powered insights integration
+- **Service line items** (NRE, consulting, time & materials)
+- **Blanket purchase orders** with release tracking
+
+## Features
+
+### Standard PO Functionality
+- Line item management with catalog and requisition sources
+- Multi-step approval workflows with threshold-based rules
+- Revision history and version control
+- Vendor notification and acknowledgment tracking
+
+### Service Lines
+Service lines support non-physical goods such as NRE, consulting, and maintenance:
+
+| Billing Type | Description |
+|--------------|-------------|
+| **Fixed Price** | Single total amount for the service |
+| **Time & Materials** | Hourly/daily rate with not-to-exceed limits |
+| **Milestone** | Payment tied to deliverable completion |
+
+Service lines include:
+- Progress tracking (percentage and hours/units consumed)
+- Milestone management with status transitions
+- Configurable service categories
+- Separate approval workflow from receiving
+
+### Blanket Purchase Orders
+Blanket POs allow ongoing releases against an authorized total:
+
+- **Terms**: Effective/expiration dates, authorized total, per-release limits
+- **Utilization tracking**: Committed, released, consumed, and available amounts
+- **Manual releases**: Create releases selecting lines and quantities
+- **Release history**: Full audit trail of all releases
 
 ## Architecture Overview
 
@@ -32,11 +65,19 @@ sindri-prototype/
 │   │   ├── icons/                  # Icon components
 │   │   ├── left-nav/               # Navigation sidebar
 │   │   ├── data-table/             # Reusable table system
-│   │   └── forms/                  # Shared form components
+│   │   ├── forms/                  # Shared form components
+│   │   ├── service-progress-editor.tsx    # Service progress UI
+│   │   ├── milestone-editor.tsx           # Milestone management
+│   │   ├── blanket-utilization-card.tsx   # Blanket usage display
+│   │   ├── create-release-modal.tsx       # Release creation wizard
+│   │   └── release-history-panel.tsx      # Release list panel
 │   │
 │   ├── context/                    # Global application contexts
 │   ├── types/                      # Global type definitions
 │   │   └── enums/                  # Enum definitions with metadata
+│   │       ├── line-type.ts        # LineType, ServiceBillingType
+│   │       ├── service-line-status.ts  # ServiceLineStatus
+│   │       └── po-type.ts          # POType (Standard/Blanket/Release)
 │   ├── lib/                        # Shared utilities
 │   │   ├── utils/                  # General utilities
 │   │   ├── clients/                # API clients (mock)
@@ -91,6 +132,32 @@ ApprovalConfig = {
 }
 ```
 
+### 5. Line Type Discrimination
+
+Lines are typed to distinguish physical goods from services:
+```typescript
+enum LineType {
+  Item = "ITEM",       // Physical goods (default)
+  Service = "SERVICE", // Service-based work
+  NRE = "NRE",        // Non-Recurring Engineering
+}
+```
+
+Service lines bypass receiving workflow and use `ServiceLineStatus` for completion tracking.
+
+### 6. Blanket PO Utilization
+
+Blanket POs track authorization usage:
+```typescript
+interface BlanketUtilization {
+  committed: number;   // Unreleased line amounts
+  released: number;    // Sum of all releases
+  consumed: number;    // Invoiced/paid
+  available: number;   // Remaining authorization
+  releaseCount: number;
+}
+```
+
 ## Mapping to Sindri
 
 | Prototype Location | Sindri Location |
@@ -121,6 +188,38 @@ npm run dev
 
 ## Key Files
 
+### Core Workflow
 - `src/app/supply/purchase-orders/_lib/contexts/revision-context.tsx` - Core workflow logic
 - `src/app/supply/purchase-orders/_adapters/purchase-order.adapter.ts` - Data access
-- `src/types/enums/` - All status enums with metadata
+
+### Types & Enums
+- `src/types/enums/line-type.ts` - LineType, ServiceBillingType enums
+- `src/types/enums/service-line-status.ts` - ServiceLineStatus enum
+- `src/types/enums/po-type.ts` - POType enum
+- `src/app/supply/purchase-orders/_lib/types/purchase-order.types.ts` - Core PO types
+- `src/app/supply/purchase-orders/_lib/types/blanket-po.types.ts` - Blanket PO types
+
+### Service Line Components
+- `src/components/service-progress-editor.tsx` - Progress tracking UI
+- `src/components/milestone-editor.tsx` - Milestone management
+- `src/components/add-line-modal.tsx` - Includes Service tab for adding service lines
+
+### Blanket PO Components
+- `src/components/blanket-utilization-card.tsx` - Utilization visualization
+- `src/components/create-release-modal.tsx` - Release creation wizard
+- `src/components/release-history-panel.tsx` - Release list with filtering
+
+## Default Service Categories
+
+The following categories are available for service lines:
+- NRE (Non-Recurring Engineering)
+- Consulting
+- Maintenance
+- Installation
+- Training
+- Testing
+- Tooling
+- Engineering
+- Support
+
+Categories are user-configurable via app settings.
