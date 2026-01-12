@@ -1,12 +1,9 @@
-import React from "react";
 import { createEnumMeta } from "@/lib/utils/create-enum-meta";
 import {
-  CircleDashed,
-  Circle,
-  CircleX,
-  CirclePause,
-} from "lucide-react";
-import { StatusIcon } from "@/components/icons/status-icon";
+  getStatusIcon,
+  createStatusStageMapping,
+  type StatusStage,
+} from "@/lib/ui/status-icons";
 
 // Define the SO line item status enum (outbound/shipping focused)
 export enum SOLineItemStatus {
@@ -21,18 +18,39 @@ export enum SOLineItemStatus {
   Canceled = "canceled",
 }
 
+/**
+ * Mapping from SOLineItemStatus to universal status stages.
+ * This ensures consistent icons with other status types.
+ */
+export const SO_LINE_ITEM_STATUS_STAGES: Record<SOLineItemStatus, StatusStage> = {
+  [SOLineItemStatus.Draft]: "draft",
+  [SOLineItemStatus.Confirmed]: "started",
+  [SOLineItemStatus.Open]: "open",
+  [SOLineItemStatus.PartiallyShipped]: "partial",
+  [SOLineItemStatus.Shipped]: "mostlyComplete",
+  [SOLineItemStatus.Delivered]: "nearComplete",
+  [SOLineItemStatus.Closed]: "complete",
+  [SOLineItemStatus.OnHold]: "onHold",
+  [SOLineItemStatus.Canceled]: "cancelled",
+};
+
+/**
+ * Helper for getting icons and stage info for SO line item statuses.
+ */
+export const SOLineItemStatusMapping = createStatusStageMapping(SO_LINE_ITEM_STATUS_STAGES);
+
 export const SOLineItemStatusMeta = createEnumMeta(
   SOLineItemStatus,
   {
-    [SOLineItemStatus.Draft]:            { label: "Draft",             icon: React.createElement(CircleDashed, { className: "h-4 w-4" }) },
-    [SOLineItemStatus.Confirmed]:        { label: "Confirmed",         icon: React.createElement(StatusIcon, { percent: 10, className: "h-4 w-4" }) },
-    [SOLineItemStatus.Open]:             { label: "Open",              icon: React.createElement(Circle, { className: "h-4 w-4" }) },
-    [SOLineItemStatus.PartiallyShipped]: { label: "Partially Shipped", icon: React.createElement(StatusIcon, { percent: 50, className: "h-4 w-4" }) },
-    [SOLineItemStatus.Shipped]:          { label: "Shipped",           icon: React.createElement(StatusIcon, { percent: 75, className: "h-4 w-4" }) },
-    [SOLineItemStatus.Delivered]:        { label: "Delivered",         icon: React.createElement(StatusIcon, { percent: 90, className: "h-4 w-4" }) },
-    [SOLineItemStatus.Closed]:           { label: "Closed",            icon: React.createElement(StatusIcon, { percent: 100, className: "h-4 w-4" }) },
-    [SOLineItemStatus.OnHold]:           { label: "On Hold",           icon: React.createElement(CirclePause, { className: "h-4 w-4 text-muted-foreground" }) },
-    [SOLineItemStatus.Canceled]:         { label: "Canceled",          icon: React.createElement(CircleX, { className: "h-4 w-4" }) },
+    [SOLineItemStatus.Draft]:            { label: "Draft",             icon: getStatusIcon("draft") },
+    [SOLineItemStatus.Confirmed]:        { label: "Confirmed",         icon: getStatusIcon("started") },
+    [SOLineItemStatus.Open]:             { label: "Open",              icon: getStatusIcon("open") },
+    [SOLineItemStatus.PartiallyShipped]: { label: "Partially Shipped", icon: getStatusIcon("partial") },
+    [SOLineItemStatus.Shipped]:          { label: "Shipped",           icon: getStatusIcon("mostlyComplete") },
+    [SOLineItemStatus.Delivered]:        { label: "Delivered",         icon: getStatusIcon("nearComplete") },
+    [SOLineItemStatus.Closed]:           { label: "Closed",            icon: getStatusIcon("complete") },
+    [SOLineItemStatus.OnHold]:           { label: "On Hold",           icon: getStatusIcon("onHold") },
+    [SOLineItemStatus.Canceled]:         { label: "Canceled",          icon: getStatusIcon("cancelled") },
   },
   // Define the display order
   [

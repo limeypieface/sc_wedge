@@ -1,12 +1,9 @@
-import React from "react";
 import { createEnumMeta } from "@/lib/utils/create-enum-meta";
 import {
-  CircleDashed,
-  CircleDotDashed,
-  Circle,
-  CircleX
-} from "lucide-react";
-import { StatusIcon } from "@/components/icons/status-icon";
+  getStatusIcon,
+  createStatusStageMapping,
+  type StatusStage,
+} from "@/lib/ui/status-icons";
 
 // Define the enum locally since we don't have GraphQL codegen
 export enum PurchaseOrderStatus {
@@ -19,16 +16,35 @@ export enum PurchaseOrderStatus {
   Cancelled = "CANCELLED",
 }
 
+/**
+ * Mapping from PurchaseOrderStatus to universal status stages.
+ * This ensures consistent icons with other status types.
+ */
+export const PURCHASE_ORDER_STATUS_STAGES: Record<PurchaseOrderStatus, StatusStage> = {
+  [PurchaseOrderStatus.Draft]: "draft",
+  [PurchaseOrderStatus.Planned]: "planned",
+  [PurchaseOrderStatus.Submitted]: "open",
+  [PurchaseOrderStatus.Approved]: "started",
+  [PurchaseOrderStatus.Received]: "mostlyComplete",
+  [PurchaseOrderStatus.Fulfilled]: "complete",
+  [PurchaseOrderStatus.Cancelled]: "cancelled",
+};
+
+/**
+ * Helper for getting icons and stage info for purchase order statuses.
+ */
+export const PurchaseOrderStatusMapping = createStatusStageMapping(PURCHASE_ORDER_STATUS_STAGES);
+
 export const PurchaseOrderStatusMeta = createEnumMeta(
   PurchaseOrderStatus,
   {
-    [PurchaseOrderStatus.Draft]:     { label: "Draft",     icon: React.createElement(CircleDashed, { className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Planned]:   { label: "Planned",   icon: React.createElement(CircleDotDashed, { className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Submitted]: { label: "Submitted", icon: React.createElement(Circle, { className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Approved]:  { label: "Approved",  icon: React.createElement(StatusIcon, { percent: 25, className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Received]:  { label: "Received",  icon: React.createElement(StatusIcon, { percent: 75, className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Fulfilled]: { label: "Fulfilled", icon: React.createElement(StatusIcon, { percent: 100, className: "h-4 w-4" }) },
-    [PurchaseOrderStatus.Cancelled]: { label: "Cancelled", icon: React.createElement(CircleX, { className: "h-4 w-4" }) },
+    [PurchaseOrderStatus.Draft]:     { label: "Draft",     icon: getStatusIcon("draft") },
+    [PurchaseOrderStatus.Planned]:   { label: "Planned",   icon: getStatusIcon("planned") },
+    [PurchaseOrderStatus.Submitted]: { label: "Submitted", icon: getStatusIcon("open") },
+    [PurchaseOrderStatus.Approved]:  { label: "Approved",  icon: getStatusIcon("started") },
+    [PurchaseOrderStatus.Received]:  { label: "Received",  icon: getStatusIcon("mostlyComplete") },
+    [PurchaseOrderStatus.Fulfilled]: { label: "Fulfilled", icon: getStatusIcon("complete") },
+    [PurchaseOrderStatus.Cancelled]: { label: "Cancelled", icon: getStatusIcon("cancelled") },
   },
   // Define the display order
   [

@@ -1,12 +1,9 @@
-import React from "react";
 import { createEnumMeta } from "@/lib/utils/create-enum-meta";
 import {
-  CircleDashed,
-  Circle,
-  CircleX,
-  CirclePause,
-} from "lucide-react";
-import { StatusIcon } from "@/components/icons/status-icon";
+  getStatusIcon,
+  createStatusStageMapping,
+  type StatusStage,
+} from "@/lib/ui/status-icons";
 
 // Define the line item status enum
 export enum LineItemStatus {
@@ -20,17 +17,37 @@ export enum LineItemStatus {
   Canceled = "canceled",
 }
 
+/**
+ * Mapping from LineItemStatus to universal status stages.
+ * This ensures consistent icons with other status types.
+ */
+export const LINE_ITEM_STATUS_STAGES: Record<LineItemStatus, StatusStage> = {
+  [LineItemStatus.Draft]: "draft",
+  [LineItemStatus.Issued]: "started",
+  [LineItemStatus.Open]: "open",
+  [LineItemStatus.PartiallyReceived]: "partial",
+  [LineItemStatus.Received]: "mostlyComplete",
+  [LineItemStatus.Closed]: "complete",
+  [LineItemStatus.OnHold]: "onHold",
+  [LineItemStatus.Canceled]: "cancelled",
+};
+
+/**
+ * Helper for getting icons and stage info for line item statuses.
+ */
+export const LineItemStatusMapping = createStatusStageMapping(LINE_ITEM_STATUS_STAGES);
+
 export const LineItemStatusMeta = createEnumMeta(
   LineItemStatus,
   {
-    [LineItemStatus.Draft]:             { label: "Draft",              icon: React.createElement(CircleDashed, { className: "h-4 w-4" }) },
-    [LineItemStatus.Issued]:            { label: "Issued",             icon: React.createElement(StatusIcon, { percent: 10, className: "h-4 w-4" }) },
-    [LineItemStatus.Open]:              { label: "Open",               icon: React.createElement(Circle, { className: "h-4 w-4" }) },
-    [LineItemStatus.PartiallyReceived]: { label: "Partially Received", icon: React.createElement(StatusIcon, { percent: 50, className: "h-4 w-4" }) },
-    [LineItemStatus.Received]:          { label: "Received",           icon: React.createElement(StatusIcon, { percent: 75, className: "h-4 w-4" }) },
-    [LineItemStatus.Closed]:            { label: "Closed",             icon: React.createElement(StatusIcon, { percent: 100, className: "h-4 w-4" }) },
-    [LineItemStatus.OnHold]:            { label: "On Hold",            icon: React.createElement(CirclePause, { className: "h-4 w-4 text-muted-foreground" }) },
-    [LineItemStatus.Canceled]:          { label: "Canceled",           icon: React.createElement(CircleX, { className: "h-4 w-4" }) },
+    [LineItemStatus.Draft]:             { label: "Draft",              icon: getStatusIcon("draft") },
+    [LineItemStatus.Issued]:            { label: "Issued",             icon: getStatusIcon("started") },
+    [LineItemStatus.Open]:              { label: "Open",               icon: getStatusIcon("open") },
+    [LineItemStatus.PartiallyReceived]: { label: "Partially Received", icon: getStatusIcon("partial") },
+    [LineItemStatus.Received]:          { label: "Received",           icon: getStatusIcon("mostlyComplete") },
+    [LineItemStatus.Closed]:            { label: "Closed",             icon: getStatusIcon("complete") },
+    [LineItemStatus.OnHold]:            { label: "On Hold",            icon: getStatusIcon("onHold") },
+    [LineItemStatus.Canceled]:          { label: "Canceled",           icon: getStatusIcon("cancelled") },
   },
   // Define the display order
   [

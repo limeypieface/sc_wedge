@@ -1,114 +1,170 @@
-# Purchase Order Prototype - Sindri-Aligned
+# Sindri Prototype
 
-A standalone prototype for Purchase Order management workflows, structured to mirror Sindri's architecture for easy future integration.
+A manufacturing-oriented supply chain management prototype with Purchase Order and Sales Order workflows, built with domain-driven architecture.
 
-## Purpose
+## Overview
 
-This prototype demonstrates:
-- PO revision and approval workflows
-- Multi-level approval chains with cost thresholds
-- Vendor communication workflows
-- PDF generation for supplier contracts
-- AI-powered insights integration
-- **Service line items** (NRE, consulting, time & materials)
-- **Blanket purchase orders** with release tracking
+This prototype demonstrates a complete supply chain management system with:
+
+- **Purchase Orders (PO)** - Inbound supply chain with revision-based approval workflows
+- **Sales Orders (SO)** - Outbound sales with direct-edit model and fulfillment tracking
+- **Domain Engines** - Pure, testable business logic separated from UI
+- **Universal Status System** - Consistent visual indicators across all order types
+- **Configuration Wizard** - Onboarding flow that adapts to organization complexity
 
 ## Features
 
-### Standard PO Functionality
-- Line item management with catalog and requisition sources
-- Multi-step approval workflows with threshold-based rules
-- Revision history and version control
-- Vendor notification and acknowledgment tracking
+### Purchase Order Management
 
-### Service Lines
-Service lines support non-physical goods such as NRE, consulting, and maintenance:
+| Feature | Description |
+|---------|-------------|
+| **Revision Workflow** | Draft → Pending Approval → Approved → Sent → Acknowledged |
+| **Multi-level Approval** | Threshold-based approval chains with escalation |
+| **Blanket POs** | Ongoing releases against authorized totals |
+| **Service Lines** | NRE, consulting, time & materials with milestone tracking |
+| **Vendor Communication** | Email/VoIP integration with acknowledgment tracking |
+| **PDF Generation** | Export POs for supplier contracts |
 
-| Billing Type | Description |
-|--------------|-------------|
-| **Fixed Price** | Single total amount for the service |
-| **Time & Materials** | Hourly/daily rate with not-to-exceed limits |
-| **Milestone** | Payment tied to deliverable completion |
+### Sales Order Management
 
-Service lines include:
-- Progress tracking (percentage and hours/units consumed)
-- Milestone management with status transitions
-- Configurable service categories
-- Separate approval workflow from receiving
+| Feature | Description |
+|---------|-------------|
+| **Direct Edit Model** | No draft cycle - changes apply immediately |
+| **Fulfillment Tracking** | Shipment creation and delivery status |
+| **Customer Management** | Contact info, payment terms, shipping addresses |
+| **Financial Tracking** | Order totals, invoicing status, payment tracking |
 
-### Blanket Purchase Orders
-Blanket POs allow ongoing releases against an authorized total:
-
-- **Terms**: Effective/expiration dates, authorized total, per-release limits
-- **Utilization tracking**: Committed, released, consumed, and available amounts
-- **Manual releases**: Create releases selecting lines and quantities
-- **Release history**: Full audit trail of all releases
-
-## Architecture Overview
+### Line Item Types
 
 ```
-sindri-prototype/
-├── src/
-│   ├── app/
-│   │   └── supply/
-│   │       └── purchase-orders/     # PO feature module (Sindri pattern)
-│   │           ├── _components/     # Feature-specific components
-│   │           ├── _hooks/          # Feature-specific hooks
-│   │           ├── _lib/            # Feature-specific logic
-│   │           │   ├── contexts/    # PO-specific contexts
-│   │           │   ├── types/       # PO-specific types
-│   │           │   └── utils/       # PO-specific utilities
-│   │           └── _adapters/       # Data adapters (mock GraphQL)
-│   │
-│   ├── components/                  # Shared components
-│   │   ├── ui/                     # Base UI components (shadcn)
-│   │   ├── icons/                  # Icon components
-│   │   ├── left-nav/               # Navigation sidebar
-│   │   ├── data-table/             # Reusable table system
-│   │   ├── forms/                  # Shared form components
-│   │   ├── service-progress-editor.tsx    # Service progress UI
-│   │   ├── milestone-editor.tsx           # Milestone management
-│   │   ├── blanket-utilization-card.tsx   # Blanket usage display
-│   │   ├── create-release-modal.tsx       # Release creation wizard
-│   │   └── release-history-panel.tsx      # Release list panel
-│   │
-│   ├── context/                    # Global application contexts
-│   ├── types/                      # Global type definitions
-│   │   └── enums/                  # Enum definitions with metadata
-│   │       ├── line-type.ts        # LineType, ServiceBillingType
-│   │       ├── service-line-status.ts  # ServiceLineStatus
-│   │       └── po-type.ts          # POType (Standard/Blanket/Release)
-│   ├── lib/                        # Shared utilities
-│   │   ├── utils/                  # General utilities
-│   │   ├── clients/                # API clients (mock)
-│   │   └── mock-data/              # Mock data sources
-│   │
-│   ├── hooks/                      # Global custom hooks
-│   └── config/                     # Application configuration
+┌─────────────┬────────────────────────────────────────────┐
+│ Line Type   │ Description                                │
+├─────────────┼────────────────────────────────────────────┤
+│ Material    │ Physical goods with receiving workflow     │
+│ Service     │ Billable work (consulting, maintenance)    │
+│ NRE         │ Non-Recurring Engineering charges          │
+└─────────────┴────────────────────────────────────────────┘
+```
+
+Service lines support multiple billing types:
+- **Fixed Price** - Single total amount
+- **Time & Materials** - Hourly/daily rate with NTE limits
+- **Milestone** - Payment tied to deliverable completion
+
+### Blanket Purchase Orders
+
+Blanket POs allow ongoing releases against an authorized total:
+
+- Effective/expiration date tracking
+- Per-release limits and authorization totals
+- Utilization metrics (committed, released, consumed, available)
+- Full release history with audit trail
+
+## Architecture
+
+### Domain Engines
+
+Pure, framework-agnostic business logic with no side effects:
+
+```
+src/engines/
+├── _kernel/           # Shared primitives (Money, Quantity, Result)
+├── state-machine/     # FSM with guards and lifecycle hooks
+├── financial/         # Pricing, discounts, taxes, totals
+├── approval/          # Multi-stage approval workflows
+├── revision/          # Semantic versioning & change tracking
+├── communication/     # Multi-channel messaging
+├── task/              # Signal detection & prioritization
+└── authorization/     # Request-authorize-execute lifecycle
+```
+
+### Application Structure
+
+```
+src/
+├── app/                              # Next.js routes
+│   ├── supply/
+│   │   ├── purchase-orders/          # PO list and management
+│   │   └── suppliers/                # Supplier directory
+│   ├── sales/
+│   │   ├── sales-orders/             # SO list and management
+│   │   └── customers/                # Customer directory
+│   ├── po/[poNumber]/                # PO detail view
+│   ├── so/[soNumber]/                # SO detail view
+│   ├── buyer/                        # Buyer dashboard
+│   ├── settings/                     # App configuration
+│   └── setup/                        # Onboarding wizard
 │
-└── __tests__/                      # Test files
-    ├── unit/                       # Unit tests
-    └── mocks/                      # Mock utilities
+├── components/                       # React components
+│   ├── ui/                          # Base UI library (shadcn/radix)
+│   ├── po/                          # PO-specific components
+│   ├── so/                          # SO-specific components
+│   └── ...                          # Shared components
+│
+├── lib/
+│   ├── ui/                          # UI utilities
+│   │   ├── status-icons.tsx         # Universal status icons
+│   │   ├── formatters.ts            # Display formatting
+│   │   └── changes.ts               # Change tracking
+│   ├── mock-data.ts                 # Development data
+│   └── utils/                       # General utilities
+│
+└── types/
+    ├── enums/                       # Status enums with metadata
+    └── *.types.ts                   # Domain type definitions
+```
+
+### Universal Status Icons
+
+Consistent visual indicators across PO, SO, and line items:
+
+| Stage | Icon | Usage |
+|-------|------|-------|
+| `draft` | Dashed circle | Not yet active |
+| `planned` | Dot-dashed circle | Scheduled |
+| `open` | Empty circle | Awaiting action |
+| `started` | 10% filled | Just begun |
+| `partial` | 50% filled | In progress |
+| `mostlyComplete` | 75% filled | Nearing completion |
+| `nearComplete` | 90% filled | Almost done |
+| `complete` | 100% filled (green) | Finished |
+| `onHold` | Pause icon | Paused |
+| `cancelled` | X icon | Terminated |
+| `backordered` | Clock icon | Awaiting supply |
+
+Usage:
+```typescript
+import { getStatusIcon, createStatusStageMapping } from '@/lib/ui/status-icons';
+
+// Get icon directly
+const icon = getStatusIcon("partial");
+
+// Create domain mapping
+const mapping = createStatusStageMapping({
+  [MyStatus.Draft]: "draft",
+  [MyStatus.Active]: "started",
+  [MyStatus.Done]: "complete",
+});
 ```
 
 ## Key Design Decisions
 
-### 1. Feature Module Pattern (Sindri-aligned)
+### 1. Feature Module Pattern
 
-Each feature is self-contained with:
-- `_components/` - UI components specific to the feature
-- `_hooks/` - Custom hooks for the feature
-- `_lib/` - Business logic, types, and utilities
-- `_adapters/` - Data access layer (mock GraphQL in prototype)
+Each feature is self-contained:
+```
+purchase-orders/
+├── _components/     # Feature UI components
+├── _hooks/          # Feature hooks
+├── _lib/            # Business logic & types
+└── _adapters/       # Data access layer
+```
 
 ### 2. Data Adapter Pattern
 
-All data access goes through adapters that simulate GraphQL operations:
+All data access through adapters (mock GraphQL in prototype):
 ```typescript
-// In production Sindri, this would be real GraphQL queries
-const { data, loading, error } = usePurchaseOrderQuery(poNumber);
-
-// In prototype, same interface backed by mock data
+// Same interface in prototype and production
 const { data, loading, error } = usePurchaseOrderQuery(poNumber);
 ```
 
@@ -116,110 +172,103 @@ const { data, loading, error } = usePurchaseOrderQuery(poNumber);
 
 | State Type | Location | Example |
 |------------|----------|---------|
-| Server State | Adapters/Queries | PO data, line items |
-| Feature State | Feature Contexts | Revision workflow, approval chain |
-| UI State | Component Local | Modal open, selected tab |
-| Global State | Global Contexts | Current user, chat visibility |
+| Server State | Adapters | PO data, line items |
+| Feature State | Contexts | Revision workflow |
+| UI State | Components | Modal visibility |
+| Global State | Global Contexts | Current user |
 
 ### 4. Approval Workflow
 
-The approval system uses threshold-based rules:
+Threshold-based approval triggers:
 ```typescript
 ApprovalConfig = {
   percentageThreshold: 0.05,  // 5% cost change
   absoluteThreshold: 500,     // $500 cost change
-  mode: 'OR'                  // Either threshold triggers approval
+  mode: 'OR'                  // Either triggers approval
 }
 ```
 
-### 5. Line Type Discrimination
+### 5. Financial Precision
 
-Lines are typed to distinguish physical goods from services:
+BigInt-based money handling for precision:
 ```typescript
-enum LineType {
-  Item = "ITEM",       // Physical goods (default)
-  Service = "SERVICE", // Service-based work
-  NRE = "NRE",        // Non-Recurring Engineering
-}
+// From engines/_kernel/types.ts
+type Money = {
+  amount: bigint;      // In smallest currency unit
+  currency: Currency;
+  precision: number;
+};
 ```
 
-Service lines bypass receiving workflow and use `ServiceLineStatus` for completion tracking.
+## Configuration & Onboarding
 
-### 6. Blanket PO Utilization
+The setup wizard adapts to organization needs:
 
-Blanket POs track authorization usage:
-```typescript
-interface BlanketUtilization {
-  committed: number;   // Unreleased line amounts
-  released: number;    // Sum of all releases
-  consumed: number;    // Invoiced/paid
-  available: number;   // Remaining authorization
-  releaseCount: number;
-}
-```
+1. **Discovery Phase** - Organization type, manufacturing style, compliance needs
+2. **Review Phase** - AI-suggested configuration based on discovery
+3. **Configure Phase** - Fine-tune approval, receiving, quality settings
+4. **Complete Phase** - Activate configuration
 
-## Mapping to Sindri
-
-| Prototype Location | Sindri Location |
-|-------------------|-----------------|
-| `src/app/supply/purchase-orders/` | `src/app/supply/purchase-orders/` |
-| `src/components/ui/` | `src/components/ui/` |
-| `src/context/` | `src/context/` |
-| `src/types/enums/` | `src/types/enums/` |
-| `_adapters/*.mock.ts` | `_queries/*.generated.ts` |
-
-## Migration Path
-
-When integrating into Sindri:
-
-1. **Replace adapters** - Swap mock adapters for real GraphQL queries
-2. **Connect auth** - Use Sindri's AuthContext instead of mock user
-3. **Add mutations** - Convert local state changes to GraphQL mutations
-4. **Update imports** - Point to Sindri's shared components
+Complexity tiers: `Starter` → `Standard` → `Advanced` → `Enterprise`
 
 ## Running the Prototype
 
-This prototype runs independently:
 ```bash
 cd sindri-prototype
 npm install
 npm run dev
 ```
 
+Open http://localhost:3000
+
+## Testing
+
+```bash
+npm test           # Run all tests
+npm run coverage   # With coverage report
+```
+
+Test structure:
+- `src/engines/__tests__/` - Domain engine unit tests
+- `src/__tests__/unit/` - Component and hook tests
+
+## Tech Stack
+
+- **Next.js 16** + **React 19** - Framework
+- **TypeScript 5** - Type safety
+- **Tailwind CSS 4** - Styling
+- **Radix UI** - Accessible component primitives
+- **Zod** - Runtime validation
+- **Vitest** - Testing
+
 ## Key Files
 
-### Core Workflow
-- `src/app/supply/purchase-orders/_lib/contexts/revision-context.tsx` - Core workflow logic
-- `src/app/supply/purchase-orders/_adapters/purchase-order.adapter.ts` - Data access
+### Domain Engines
+- `src/engines/_kernel/types.ts` - Core domain primitives
+- `src/engines/financial/calculator.ts` - Pricing calculations
+- `src/engines/approval/engine.ts` - Approval workflow logic
+- `src/engines/state-machine/machine.ts` - FSM implementation
 
-### Types & Enums
-- `src/types/enums/line-type.ts` - LineType, ServiceBillingType enums
-- `src/types/enums/service-line-status.ts` - ServiceLineStatus enum
-- `src/types/enums/po-type.ts` - POType enum
-- `src/app/supply/purchase-orders/_lib/types/purchase-order.types.ts` - Core PO types
-- `src/app/supply/purchase-orders/_lib/types/blanket-po.types.ts` - Blanket PO types
+### Status System
+- `src/lib/ui/status-icons.tsx` - Universal status icons
+- `src/components/ui/status-pill.tsx` - Status badge component
+- `src/types/enums/` - Status enum definitions
 
-### Service Line Components
-- `src/components/service-progress-editor.tsx` - Progress tracking UI
-- `src/components/milestone-editor.tsx` - Milestone management
-- `src/components/add-line-modal.tsx` - Includes Service tab for adding service lines
+### Order Management
+- `src/app/supply/purchase-orders/` - PO feature module
+- `src/app/sales/sales-orders/` - SO feature module
+- `src/components/po/po-status-config.ts` - PO status configuration
+- `src/components/so/so-status-config.ts` - SO status configuration
 
-### Blanket PO Components
-- `src/components/blanket-utilization-card.tsx` - Utilization visualization
-- `src/components/create-release-modal.tsx` - Release creation wizard
-- `src/components/release-history-panel.tsx` - Release list with filtering
+## Migration to Production
 
-## Default Service Categories
+When integrating into production Sindri:
 
-The following categories are available for service lines:
-- NRE (Non-Recurring Engineering)
-- Consulting
-- Maintenance
-- Installation
-- Training
-- Testing
-- Tooling
-- Engineering
-- Support
+1. **Replace adapters** - Swap mock adapters for real GraphQL
+2. **Connect auth** - Use production AuthContext
+3. **Add mutations** - Convert local state to GraphQL mutations
+4. **Update imports** - Point to shared component library
 
-Categories are user-configurable via app settings.
+## License
+
+Proprietary - Internal use only

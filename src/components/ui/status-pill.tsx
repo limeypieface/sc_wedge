@@ -46,6 +46,13 @@ export type StatusPillColor =
 export type StatusPillSize = "sm" | "md";
 
 /**
+ * Icon type - supports both LucideIcon components and pre-rendered ReactNode.
+ * Use ReactNode for universal status icons (StatusIcon with progress).
+ * Use LucideIcon for standard lucide-react icons.
+ */
+export type StatusIconType = LucideIcon | React.ReactNode;
+
+/**
  * Configuration for a single status value.
  */
 export interface StatusItemConfig {
@@ -53,8 +60,8 @@ export interface StatusItemConfig {
   readonly label: string;
   /** Semantic color for the pill */
   readonly color: StatusPillColor;
-  /** Optional icon (LucideIcon) */
-  readonly icon?: LucideIcon;
+  /** Optional icon - LucideIcon component or ReactNode (for universal status icons) */
+  readonly icon?: StatusIconType;
   /** Optional description for tooltips */
   readonly description?: string;
 }
@@ -154,9 +161,28 @@ export function StatusPill<T extends string>({
     );
   }
 
-  const { label, color, icon: Icon } = statusConfig;
+  const { label, color, icon } = statusConfig;
   const sizeStyle = SIZE_STYLES[size];
   const colorStyle = COLOR_STYLES[color];
+
+  // Render the icon - handle both LucideIcon components and ReactNode
+  const renderIcon = () => {
+    if (!icon) return null;
+
+    // Check if it's a LucideIcon (function component) vs ReactNode (already rendered)
+    if (typeof icon === "function") {
+      const IconComponent = icon as LucideIcon;
+      return <IconComponent className={cn(sizeStyle.icon, "flex-shrink-0")} />;
+    }
+
+    // It's a ReactNode (pre-rendered, like universal status icons)
+    // Wrap it to apply consistent sizing
+    return (
+      <span className={cn(sizeStyle.icon, "flex-shrink-0 inline-flex items-center justify-center")}>
+        {icon}
+      </span>
+    );
+  };
 
   return (
     <span
@@ -168,7 +194,7 @@ export function StatusPill<T extends string>({
       )}
       title={statusConfig.description}
     >
-      {Icon && <Icon className={cn(sizeStyle.icon, "flex-shrink-0")} />}
+      {renderIcon()}
       {showLabel && <span className={sizeStyle.text}>{label}</span>}
     </span>
   );

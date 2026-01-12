@@ -4,6 +4,9 @@
  * Maps Sales Order status enums to StatusPill configuration.
  * This file bridges the domain status enums to the generic UI component.
  *
+ * Uses universal status icons from @/lib/ui/status-icons for consistency
+ * across PO, SO, and line item status displays.
+ *
  * Usage:
  *   import { SO_REVISION_STATUS_CONFIG } from "@/components/so/so-status-config";
  *   <StatusPill status={revision.status} config={SO_REVISION_STATUS_CONFIG} />
@@ -16,16 +19,13 @@ import {
   Send,
   FileCheck,
   FileText,
-  Package,
-  Truck,
   AlertTriangle,
   Ban,
-  ShoppingCart,
-  PauseCircle,
 } from "lucide-react";
 import type { StatusPillConfig } from "@/components/ui/status-pill";
 import { SORevisionStatus } from "@/types/enums/so-revision-status";
 import type { SalesOrderStatus, SalesOrderLineStatus } from "@/app/sales/sales-orders/_lib/types";
+import { getStatusIcon } from "@/lib/ui/status-icons";
 
 // =============================================================================
 // SO REVISION STATUS CONFIG
@@ -80,73 +80,73 @@ export const SO_REVISION_STATUS_CONFIG: StatusPillConfig<SORevisionStatus> = {
 
 /**
  * Configuration for overall Sales Order statuses.
- * Used in SO list views and header displays.
+ * Uses universal status icons for consistency.
  */
 export const SALES_ORDER_STATUS_CONFIG: StatusPillConfig<SalesOrderStatus> = {
   draft: {
     label: "Draft",
     color: "gray",
-    icon: FileText,
+    icon: getStatusIcon("draft"),
     description: "Order is being prepared",
   },
   pending_approval: {
     label: "Pending Approval",
     color: "amber",
-    icon: Clock,
+    icon: getStatusIcon("open"),
     description: "Awaiting internal approval",
   },
   approved: {
     label: "Approved",
     color: "green",
-    icon: CheckCircle,
+    icon: getStatusIcon("started"),
     description: "Approved, ready to send",
   },
   sent: {
     label: "Sent",
     color: "blue",
-    icon: Send,
+    icon: getStatusIcon("started"),
     description: "Sent to customer",
   },
   confirmed: {
     label: "Confirmed",
     color: "green",
-    icon: FileCheck,
+    icon: getStatusIcon("partial"),
     description: "Confirmed by customer",
   },
   processing: {
     label: "Processing",
     color: "blue",
-    icon: Package,
+    icon: getStatusIcon("partial"),
     description: "Order is being fulfilled",
   },
   shipped: {
     label: "Shipped",
     color: "blue",
-    icon: Truck,
+    icon: getStatusIcon("mostlyComplete"),
     description: "Order has been shipped",
   },
   delivered: {
     label: "Delivered",
     color: "green",
-    icon: CheckCircle,
+    icon: getStatusIcon("nearComplete"),
     description: "Order delivered to customer",
   },
   completed: {
     label: "Completed",
     color: "green",
-    icon: FileCheck,
+    icon: getStatusIcon("complete"),
     description: "Order complete and invoiced",
   },
   cancelled: {
     label: "Cancelled",
     color: "red",
-    icon: Ban,
+    icon: getStatusIcon("cancelled"),
     description: "Order has been cancelled",
   },
   on_hold: {
     label: "On Hold",
     color: "amber",
-    icon: PauseCircle,
+    icon: getStatusIcon("onHold"),
     description: "Order is on hold",
   },
 };
@@ -157,43 +157,43 @@ export const SALES_ORDER_STATUS_CONFIG: StatusPillConfig<SalesOrderStatus> = {
 
 /**
  * Configuration for SO line item statuses.
- * Used in line item displays and fulfillment workflows.
+ * Uses universal status icons for consistency.
  */
 export const SO_LINE_STATUS_CONFIG: StatusPillConfig<SalesOrderLineStatus> = {
   open: {
     label: "Open",
     color: "gray",
-    icon: ShoppingCart,
+    icon: getStatusIcon("open"),
     description: "Line is open for fulfillment",
   },
   allocated: {
     label: "Allocated",
     color: "blue",
-    icon: Package,
+    icon: getStatusIcon("started"),
     description: "Inventory allocated to this line",
   },
   partial: {
     label: "Partial",
     color: "amber",
-    icon: Package,
+    icon: getStatusIcon("partial"),
     description: "Partially shipped",
   },
   shipped: {
     label: "Shipped",
     color: "green",
-    icon: Truck,
+    icon: getStatusIcon("complete"),
     description: "Line has been shipped",
   },
   backordered: {
     label: "Backordered",
     color: "red",
-    icon: AlertTriangle,
+    icon: getStatusIcon("backordered"),
     description: "Item is backordered",
   },
   cancelled: {
     label: "Cancelled",
     color: "gray",
-    icon: Ban,
+    icon: getStatusIcon("cancelled"),
     description: "Line item cancelled",
   },
 };

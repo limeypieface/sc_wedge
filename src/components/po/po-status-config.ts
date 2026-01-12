@@ -4,6 +4,9 @@
  * Maps Purchase Order status enums to StatusPill configuration.
  * This file bridges the domain status enums to the generic UI component.
  *
+ * Uses universal status icons from @/lib/ui/status-icons for consistency
+ * across PO, SO, and line item status displays.
+ *
  * Usage:
  *   import { PO_REVISION_STATUS_CONFIG } from "@/components/po/po-status-config";
  *   <StatusPill status={revision.status} config={PO_REVISION_STATUS_CONFIG} />
@@ -16,13 +19,12 @@ import {
   Send,
   FileCheck,
   FileText,
-  Package,
   AlertTriangle,
   Ban,
-  type LucideIcon,
 } from "lucide-react";
 import type { StatusPillConfig, StatusPillColor } from "@/components/ui/status-pill";
 import { RevisionStatus, LineItemStatus, PurchaseOrderStatus } from "@/types/enums";
+import { getStatusIcon } from "@/lib/ui/status-icons";
 
 // =============================================================================
 // PO REVISION STATUS CONFIG
@@ -77,49 +79,49 @@ export const PO_REVISION_STATUS_CONFIG: StatusPillConfig<RevisionStatus> = {
 
 /**
  * Configuration for PO line item statuses.
- * Used in line item displays and receiving workflows.
+ * Uses universal status icons for consistency.
  */
 export const PO_LINE_STATUS_CONFIG: StatusPillConfig<LineItemStatus> = {
   [LineItemStatus.Pending]: {
     label: "Pending",
     color: "gray",
-    icon: Clock,
+    icon: getStatusIcon("open"),
     description: "Awaiting receipt",
   },
   [LineItemStatus.PartiallyReceived]: {
     label: "Partial",
     color: "blue",
-    icon: Package,
+    icon: getStatusIcon("partial"),
     description: "Some quantity received",
   },
   [LineItemStatus.Received]: {
     label: "Received",
     color: "green",
-    icon: CheckCircle,
+    icon: getStatusIcon("complete"),
     description: "All quantity received",
   },
   [LineItemStatus.QualityHold]: {
     label: "Quality Hold",
     color: "amber",
-    icon: AlertTriangle,
+    icon: getStatusIcon("onHold"),
     description: "Awaiting quality inspection",
   },
   [LineItemStatus.Cancelled]: {
     label: "Cancelled",
     color: "gray",
-    icon: Ban,
+    icon: getStatusIcon("cancelled"),
     description: "Line item cancelled",
   },
   [LineItemStatus.Backordered]: {
     label: "Backordered",
     color: "red",
-    icon: AlertTriangle,
+    icon: getStatusIcon("backordered"),
     description: "Item is backordered",
   },
   [LineItemStatus.QualityIssue]: {
     label: "Quality Issue",
     color: "red",
-    icon: XCircle,
+    icon: getStatusIcon("cancelled"),
     description: "NCR or quality problem detected",
   },
 };
@@ -130,49 +132,49 @@ export const PO_LINE_STATUS_CONFIG: StatusPillConfig<LineItemStatus> = {
 
 /**
  * Configuration for overall Purchase Order statuses.
- * Used in PO list views and header displays.
+ * Uses universal status icons for consistency.
  */
 export const PURCHASE_ORDER_STATUS_CONFIG: StatusPillConfig<PurchaseOrderStatus> = {
   [PurchaseOrderStatus.Draft]: {
     label: "Draft",
     color: "gray",
-    icon: FileText,
+    icon: getStatusIcon("draft"),
     description: "Purchase order is being prepared",
   },
   [PurchaseOrderStatus.Planned]: {
     label: "Planned",
     color: "blue",
-    icon: Clock,
+    icon: getStatusIcon("planned"),
     description: "Purchase order is scheduled for future release",
   },
   [PurchaseOrderStatus.Submitted]: {
     label: "Submitted",
     color: "blue",
-    icon: Send,
+    icon: getStatusIcon("open"),
     description: "Purchase order has been sent to vendor",
   },
   [PurchaseOrderStatus.Approved]: {
     label: "Approved",
     color: "green",
-    icon: CheckCircle,
+    icon: getStatusIcon("started"),
     description: "Purchase order has been approved and acknowledged",
   },
   [PurchaseOrderStatus.Received]: {
     label: "Received",
     color: "blue",
-    icon: Package,
+    icon: getStatusIcon("mostlyComplete"),
     description: "Some items have been received",
   },
   [PurchaseOrderStatus.Fulfilled]: {
     label: "Fulfilled",
     color: "green",
-    icon: FileCheck,
+    icon: getStatusIcon("complete"),
     description: "All items received and order is complete",
   },
   [PurchaseOrderStatus.Cancelled]: {
     label: "Cancelled",
     color: "red",
-    icon: Ban,
+    icon: getStatusIcon("cancelled"),
     description: "Purchase order has been cancelled",
   },
 };

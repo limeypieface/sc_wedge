@@ -1,12 +1,9 @@
-import React from "react";
 import { createEnumMeta } from "@/lib/utils/create-enum-meta";
 import {
-  CircleDashed,
-  CircleDotDashed,
-  Circle,
-  CircleX
-} from "lucide-react";
-import { StatusIcon } from "@/components/icons/status-icon";
+  getStatusIcon,
+  createStatusStageMapping,
+  type StatusStage,
+} from "@/lib/ui/status-icons";
 
 // Define the enum for SO header status
 export enum SalesOrderStatus {
@@ -19,16 +16,35 @@ export enum SalesOrderStatus {
   Closed = "CLOSED",
 }
 
+/**
+ * Mapping from SalesOrderStatus to universal status stages.
+ * This ensures consistent icons with other status types.
+ */
+export const SALES_ORDER_STATUS_STAGES: Record<SalesOrderStatus, StatusStage> = {
+  [SalesOrderStatus.Pending]: "draft",
+  [SalesOrderStatus.Confirmed]: "started",
+  [SalesOrderStatus.PartiallyShipped]: "partial",
+  [SalesOrderStatus.Shipped]: "mostlyComplete",
+  [SalesOrderStatus.PartiallyInvoiced]: "mostlyComplete",
+  [SalesOrderStatus.Invoiced]: "complete",
+  [SalesOrderStatus.Closed]: "complete",
+};
+
+/**
+ * Helper for getting icons and stage info for sales order statuses.
+ */
+export const SalesOrderStatusMapping = createStatusStageMapping(SALES_ORDER_STATUS_STAGES);
+
 export const SalesOrderStatusMeta = createEnumMeta(
   SalesOrderStatus,
   {
-    [SalesOrderStatus.Pending]:           { label: "Pending",           icon: React.createElement(CircleDashed, { className: "h-4 w-4" }) },
-    [SalesOrderStatus.Confirmed]:         { label: "Confirmed",         icon: React.createElement(StatusIcon, { percent: 15, className: "h-4 w-4" }) },
-    [SalesOrderStatus.PartiallyShipped]:  { label: "Partially Shipped", icon: React.createElement(StatusIcon, { percent: 40, className: "h-4 w-4" }) },
-    [SalesOrderStatus.Shipped]:           { label: "Shipped",           icon: React.createElement(StatusIcon, { percent: 60, className: "h-4 w-4" }) },
-    [SalesOrderStatus.PartiallyInvoiced]: { label: "Partially Invoiced", icon: React.createElement(StatusIcon, { percent: 80, className: "h-4 w-4" }) },
-    [SalesOrderStatus.Invoiced]:          { label: "Invoiced",          icon: React.createElement(StatusIcon, { percent: 100, className: "h-4 w-4" }) },
-    [SalesOrderStatus.Closed]:            { label: "Closed",            icon: React.createElement(CircleX, { className: "h-4 w-4" }) },
+    [SalesOrderStatus.Pending]:           { label: "Pending",            icon: getStatusIcon("draft") },
+    [SalesOrderStatus.Confirmed]:         { label: "Confirmed",          icon: getStatusIcon("started") },
+    [SalesOrderStatus.PartiallyShipped]:  { label: "Partially Shipped",  icon: getStatusIcon("partial") },
+    [SalesOrderStatus.Shipped]:           { label: "Shipped",            icon: getStatusIcon("mostlyComplete") },
+    [SalesOrderStatus.PartiallyInvoiced]: { label: "Partially Invoiced", icon: getStatusIcon("mostlyComplete") },
+    [SalesOrderStatus.Invoiced]:          { label: "Invoiced",           icon: getStatusIcon("complete") },
+    [SalesOrderStatus.Closed]:            { label: "Closed",             icon: getStatusIcon("complete") },
   },
   // Define the display order
   [
