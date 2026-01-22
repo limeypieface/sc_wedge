@@ -751,3 +751,25 @@ export function useRevision() {
 export function useRevisionSafe() {
   return useContext(RevisionContext)
 }
+
+/**
+ * Unified workflow hook for PO
+ * Wraps useRevision to provide workflow-style API for MVP components
+ */
+export function usePOWorkflow(_poNumber: string) {
+  const revision = useRevisionSafe()
+
+  if (!revision) {
+    return null
+  }
+
+  return {
+    hasPendingDraft: revision.hasPendingDraft,
+    pendingDraft: revision.pendingDraftRevision,
+    activeRevision: revision.activeRevision,
+    createDraft: revision.createDraft,
+    enterEditMode: revision.enterEditMode,
+    exitEditMode: revision.exitEditMode,
+    isEditMode: revision.isEditMode,
+  }
+}
