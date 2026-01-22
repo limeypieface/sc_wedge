@@ -18,7 +18,7 @@ import {
   failure,
   entityId,
 } from "@/domain/shared"
-import type { EngineResult } from "../../../domain/approval-engine"
+import type { EngineResult } from "@/domain/approval-engine"
 import {
   ApprovalRepository,
   LinkedApprovalRepository,

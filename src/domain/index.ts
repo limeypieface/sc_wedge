@@ -1,43 +1,57 @@
 /**
- * Sindri Prototype - Domain Module
+ * Sindri Domain Layer
  *
- * Re-exports from the consolidated domain engines.
- * @deprecated Import from '../../domain' instead
+ * This module exports all domain engines, types, and policies.
+ * It represents the core business logic that is:
+ * - Pure and deterministic
+ * - Framework-agnostic
+ * - Fully testable in isolation
+ * - Ready for backend migration
+ *
+ * IMPORT RULES:
+ * - This layer MUST NOT import from `ui/` or `adapters/`
+ * - This layer MUST NOT have external runtime dependencies
+ * - All engines operate on abstract inputs and produce explicit outputs
+ *
+ * @module domain
  */
 
 // ============================================================================
-// SHARED TYPES - Re-export from domain/core
+// CORE TYPES
 // ============================================================================
 
-export * from "./shared"
+export * from "./core/types"
+export * from "./core/events"
+export * from "./core/errors"
 
 // ============================================================================
-// DOMAIN ENGINES - Re-export from consolidated domain module
+// DOMAIN ENGINES
 // ============================================================================
 
-// Approval Engine
-export * as ApprovalEngine from "../../domain/approval-engine"
+// State Machine Engine - Valid states, transitions, metadata, enforcement
+export * as StateMachine from "./state-machine"
 
-// Financial Engine
-export * as FinancialEngine from "../../domain/financial-engine"
+// Financial Engine - Hierarchical pricing, charges, discounts, taxes, totals
+export * as Financial from "./financial-engine"
 
-// Revision Engine (formerly Versioning Engine)
-export * as VersioningEngine from "../../domain/revision-engine"
+// Approval Engine - Policy-driven, multi-stage decision gating
+export * as Approval from "./approval-engine"
 
-// State Machine
-export * as StateMachine from "../../domain/state-machine"
+// Revision Engine - Semantic versions, change tracking, deltas, audit trails
+export * as Revision from "./revision-engine"
 
-// Communication Broker
-export * as CommunicationBroker from "../../domain/communication-broker"
+// Communication Broker - Multi-channel, thread-based, context-aware communications
+export * as Communication from "./communication-broker"
 
-// Detection Engine (formerly Issue Detection)
-export * as IssueDetection from "../../domain/detection-engine"
+// Detection Engine - Signal detection, prioritization, suggested actions
+export * as Detection from "./detection-engine"
 
-// Authorization Engine (formerly Authorization Lifecycle)
-export * as AuthorizationLifecycle from "../../domain/authorization-engine"
+// Authorization Engine - Request → authorize → execute → resolve patterns
+export * as Authorization from "./authorization-engine"
 
 // ============================================================================
-// ORDER CORE - Application-specific (kept locally)
+// ADAPTERS (PORTS)
 // ============================================================================
 
-export * as OrderCore from "./order-core"
+// Adapter interfaces for dependency injection
+export * as Adapters from "./adapters"

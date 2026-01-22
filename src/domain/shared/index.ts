@@ -34,7 +34,7 @@ export type {
   RequiredBy,
   StringKeys,
   DataOnly,
-} from "../../../domain/core/types"
+} from "../core/types"
 
 export {
   entityId,
@@ -45,7 +45,7 @@ export {
   DURATIONS,
   PRIORITY_ORDER,
   SYSTEM_ACTOR,
-} from "../../../domain/core/types"
+} from "../core/types"
 
 // Re-export all from domain/core/errors
 export type {
@@ -55,7 +55,7 @@ export type {
   DomainError,
   ValidationResult,
   ValidationError,
-} from "../../../domain/core/errors"
+} from "../core/errors"
 
 export {
   success,
@@ -74,7 +74,10 @@ export {
   invalid,
   combineValidations,
   validationToResult,
-} from "../../../domain/core/errors"
+} from "../core/errors"
 
 // Re-export SortOption type alias for backward compatibility
-export type { SortSpec as SortOption } from "../../../domain/core/types"
+export type { SortSpec as SortOption } from "../core/types"
+
+// Re-export ApprovalInstance from approval-engine
+export type { ApprovalInstance } from "../approval-engine"
