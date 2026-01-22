@@ -1,7 +1,7 @@
 "use client"
 
 import { use } from "react"
-import { PurchaseOrderDetail } from "@/components/purchase-order-detail"
+import { PurchaseOrderDetail } from "@/shared/ui/purchase-orders/purchase-order-detail"
 import { getPOData } from "@/lib/mock-data"
 import { notFound } from "next/navigation"
 

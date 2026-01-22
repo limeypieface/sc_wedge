@@ -136,14 +136,16 @@ export { SalesOrderProvider, useSalesOrder } from "./_lib/contexts";
 // COMPONENTS
 // =============================================================================
 
-export {
-  SOStatusPanel,
-  WorkflowProgress,
-  CostDeltaIndicator,
-  CustomerNotificationReminder,
-  ApprovalChainDisplay,
-  RevisionActions,
-} from "./_components";
+// Revision components are now available from @/shared/ui/revisions
+// Use: import { RevisionStatusPanel, ... } from "@/shared/ui/revisions"
+//
+// For backwards compatibility, here are the mappings:
+// - SOStatusPanel -> RevisionStatusPanel (with SO_TERMINOLOGY)
+// - WorkflowProgress -> WorkflowProgress
+// - CostDeltaIndicator -> CostDeltaIndicator
+// - CustomerNotificationReminder -> NotificationReminder (with SO_TERMINOLOGY)
+// - ApprovalChainDisplay -> ApprovalChainDisplay
+// - RevisionActions -> RevisionActions (with SO_TERMINOLOGY)
 
 // =============================================================================
 // MOCK DATA

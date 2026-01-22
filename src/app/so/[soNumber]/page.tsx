@@ -1,7 +1,7 @@
 "use client"
 
 import { use } from "react"
-import { SalesOrderDetail } from "@/components/sales-order-detail"
+import { SalesOrderDetail } from "@/shared/ui/sales-orders/sales-order-detail"
 
 interface SOPageProps {
   params: Promise<{

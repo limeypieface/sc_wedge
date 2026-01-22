@@ -2,11 +2,50 @@
  * UI Formatters
  *
  * Type-safe formatting functions for displaying domain values.
- * Integrates with kernel types (Money, Quantity, Timestamp, Percentage).
+ * Includes both kernel-integrated types and simple display utilities.
  */
 
-import type { Money, Quantity, Timestamp, Percentage, CurrencyCode } from '../../engines/_kernel';
-import { moneyToDecimal, percentageToDecimal, CURRENCY_PRECISION } from '../../engines/_kernel';
+// ============================================================================
+// Local Type Definitions (until kernel module is available)
+// ============================================================================
+
+export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD' | 'AUD' | 'CHF';
+
+export interface Money {
+  readonly amount: number; // Store as minor units (cents)
+  readonly currency: CurrencyCode;
+}
+
+export interface Quantity {
+  readonly value: number;
+  readonly unit: string;
+}
+
+export type Timestamp = string; // ISO 8601 format
+
+export interface Percentage {
+  readonly basisPoints: number; // 825 = 8.25%
+}
+
+// Helper functions
+export const CURRENCY_PRECISION: Record<CurrencyCode, number> = {
+  USD: 2,
+  EUR: 2,
+  GBP: 2,
+  JPY: 0,
+  CAD: 2,
+  AUD: 2,
+  CHF: 2,
+};
+
+export function moneyToDecimal(m: Money): number {
+  const precision = CURRENCY_PRECISION[m.currency] ?? 2;
+  return m.amount / Math.pow(10, precision);
+}
+
+export function percentageToDecimal(p: Percentage): number {
+  return p.basisPoints / 100;
+}
 
 // ============================================================================
 // Currency Symbols & Locale Config
@@ -474,4 +513,98 @@ export function formatCompactNumber(value: number): string {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+// ============================================================================
+// Display Utilities (extracted from list pages)
+// ============================================================================
+
+/**
+ * Get initials from a name (first letters of first two words)
+ * @example getInitials("Tech Suppliers Inc.") // "TS"
+ * @example getInitials("Acme") // "AC"
+ */
+export function getInitials(name: string): string {
+  const words = name.split(/\s+/)
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase()
+  return (words[0][0] + words[1][0]).toUpperCase()
+}
+
+/**
+ * Generate a consistent color class based on a name string
+ * Used for avatar backgrounds when no specific color is assigned
+ */
+export function getHashedAvatarColor(name: string): string {
+  const colors = [
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-amber-500',
+    'bg-cyan-500',
+    'bg-rose-500',
+    'bg-teal-500',
+  ]
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return colors[hash % colors.length]
+}
+
+/**
+ * Get avatar color from a predefined map or generate based on hash
+ */
+export function getAvatarColor(
+  name: string,
+  colorMap?: Record<string, string>
+): string {
+  if (colorMap && colorMap[name]) {
+    return colorMap[name]
+  }
+  return getHashedAvatarColor(name)
+}
+
+/**
+ * Format a past date as relative time (e.g., "2 days ago")
+ */
+export function formatPastRelativeDate(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffHours < 1) return 'just now'
+  if (diffHours < 24) return `about ${diffHours} hours ago`
+  if (diffDays === 1) return '1 day ago'
+  return `${diffDays} days ago`
+}
+
+/**
+ * Format a future date as relative time (e.g., "in 3 days")
+ */
+export function formatFutureDate(dateString: string | null): string {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = date.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return date.toISOString().split('T')[0]
+  if (diffDays === 0) return 'today'
+  if (diffDays === 1) return 'in 1 day'
+  if (diffDays <= 7) return `in ${diffDays} days`
+  return date.toISOString().split('T')[0]
+}
+
+/**
+ * Format a currency value as a simple string
+ * @example formatCurrencySimple(1234.56) // "$1,234.56"
+ */
+export function formatCurrencySimple(
+  amount: number,
+  currency: string = 'USD'
+): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount)
 }
