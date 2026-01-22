@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:jsx": "node scripts/lint-jsx-location.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
