@@ -84,30 +84,46 @@ src/engines/
 src/
 ├── app/                              # Next.js routes
 │   ├── supply/
-│   │   ├── purchase-orders/          # PO list and management
+│   │   ├── purchase-orders/          # PO feature module with adapters/hooks
 │   │   └── suppliers/                # Supplier directory
 │   ├── sales/
 │   │   ├── sales-orders/             # SO list and management
 │   │   └── customers/                # Customer directory
-│   ├── po/[poNumber]/                # PO detail view
-│   ├── so/[soNumber]/                # SO detail view
+│   ├── po-mvp/[poNumber]/            # PO MVP detail view
+│   ├── po/[poNumber]/                # PO full detail view
+│   ├── so-mvp/[soNumber]/            # SO MVP detail view
+│   ├── so/[soNumber]/                # SO full detail view
 │   ├── buyer/                        # Buyer dashboard
 │   ├── settings/                     # App configuration
 │   └── setup/                        # Onboarding wizard
 │
-├── components/                       # React components
-│   ├── ui/                          # Base UI library (shadcn/radix)
-│   ├── po/                          # PO-specific components
-│   ├── so/                          # SO-specific components
-│   └── ...                          # Shared components
+├── shared/ui/                        # Shared React components
+│   ├── *.tsx                        # Base UI library (shadcn/radix)
+│   ├── modals/                      # Shared modal components
+│   ├── purchase-orders/             # PO-specific components
+│   ├── sales-orders/                # SO-specific components
+│   ├── revisions/                   # Revision workflow components
+│   ├── fields/                      # Form field components
+│   └── __tests__/                   # Component tests
+│
+├── domain/                           # Domain engines
+│   └── approval-engine/             # Approval workflow logic
 │
 ├── lib/
 │   ├── ui/                          # UI utilities
-│   │   ├── status-icons.tsx         # Universal status icons
-│   │   ├── formatters.ts            # Display formatting
+│   │   ├── status.ts                # Status utilities
 │   │   └── changes.ts               # Change tracking
 │   ├── mock-data.ts                 # Development data
 │   └── utils/                       # General utilities
+│
+├── __tests__/                        # Unit tests
+│   ├── setup.ts                     # Vitest setup
+│   └── unit/                        # Unit test suites
+│       ├── adapters/                # Data adapter tests
+│       ├── hooks/                   # Hook tests
+│       ├── components/              # Component tests
+│       ├── types/                   # Type utility tests
+│       └── utils/                   # Utility function tests
 │
 └── types/
     ├── enums/                       # Status enums with metadata
@@ -223,14 +239,37 @@ Open http://localhost:3000
 
 ## Testing
 
+The project uses **Vitest** for testing with **React Testing Library** for component tests.
+
 ```bash
-npm test           # Run all tests
-npm run coverage   # With coverage report
+npm test              # Run all tests once
+npm run test:watch    # Run tests in watch mode
+npm run test:ui       # Run tests with interactive UI
+npm run test:coverage # Run tests with coverage report
 ```
 
 Test structure:
-- `src/engines/__tests__/` - Domain engine unit tests
-- `src/__tests__/unit/` - Component and hook tests
+```
+src/
+├── __tests__/
+│   ├── setup.ts                     # Vitest global setup
+│   └── unit/
+│       ├── adapters/                # Data adapter tests
+│       ├── hooks/                   # Custom hook tests
+│       ├── components/              # Component logic tests
+│       ├── types/                   # Type utility tests
+│       └── utils/                   # Utility function tests
+│
+└── shared/ui/__tests__/             # UI component tests
+    ├── test-utils.tsx               # Custom render utilities
+    ├── button.test.tsx              # Example component test
+    └── ...
+```
+
+Test utilities include:
+- `renderWithProviders()` - Render with context providers
+- `renderWithUser()` - Render with userEvent setup
+- Mock factories for PO, SO, RMA, and approval data
 
 ## Tech Stack
 
@@ -244,21 +283,23 @@ Test structure:
 ## Key Files
 
 ### Domain Engines
-- `src/engines/_kernel/types.ts` - Core domain primitives
-- `src/engines/financial/calculator.ts` - Pricing calculations
-- `src/engines/approval/engine.ts` - Approval workflow logic
-- `src/engines/state-machine/machine.ts` - FSM implementation
+- `src/domain/approval-engine/engine.ts` - Approval workflow logic
 
 ### Status System
-- `src/lib/ui/status-icons.tsx` - Universal status icons
-- `src/components/ui/status-pill.tsx` - Status badge component
-- `src/types/enums/` - Status enum definitions
+- `src/shared/ui/status-pill.tsx` - Generic status badge component
+- `src/types/enums/` - Status enum definitions with metadata
 
 ### Order Management
-- `src/app/supply/purchase-orders/` - PO feature module
-- `src/app/sales/sales-orders/` - SO feature module
-- `src/components/po/po-status-config.ts` - PO status configuration
-- `src/components/so/so-status-config.ts` - SO status configuration
+- `src/app/supply/purchase-orders/` - PO feature module (adapters, hooks, types)
+- `src/shared/ui/purchase-orders/` - PO UI components
+- `src/shared/ui/purchase-orders/po-mvp-detail.tsx` - MVP PO detail page
+- `src/shared/ui/sales-orders/` - SO UI components
+- `src/shared/ui/sales-orders/so-mvp-detail.tsx` - MVP SO detail page
+
+### Shared UI Components
+- `src/shared/ui/modals/` - Reusable modal components (line detail, edit, add)
+- `src/shared/ui/revisions/` - Revision workflow components
+- `src/shared/ui/fields/` - Form field components (SmartSelect)
 
 ## Migration to Production
 

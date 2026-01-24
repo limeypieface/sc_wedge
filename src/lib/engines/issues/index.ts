@@ -117,7 +117,7 @@ export function createDetectionEngine<TInput, TCategory extends string = string>
 
         for (const result of results) {
           issueCounter++
-          issues.push(createIssue(result, rule, customGenerateId, customGenerateIssueNumber, issueCounter))
+          issues.push(createIssue(result, rule as DetectionRule<unknown, TCategory>, customGenerateId, customGenerateIssueNumber, issueCounter))
         }
       }
 
@@ -150,7 +150,7 @@ export function createDetectionEngine<TInput, TCategory extends string = string>
 
           for (const result of results) {
             issueCounter++
-            allIssues.push(createIssue(result, rule, customGenerateId, customGenerateIssueNumber, issueCounter))
+            allIssues.push(createIssue(result, rule as DetectionRule<unknown, TCategory>, customGenerateId, customGenerateIssueNumber, issueCounter))
           }
         }
       }

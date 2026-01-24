@@ -114,7 +114,7 @@ export function GovernmentDetailsStep() {
               No SB Tracking
             </span>
             <p className="text-xs text-muted-foreground">
-              Small business goals don't apply or we don't need to track them
+              Small business goals don&apos;t apply or we don&apos;t need to track them
             </p>
           </button>
         </div>
@@ -130,7 +130,7 @@ export function GovernmentDetailsStep() {
                 ITAR Compliance Enabled
               </p>
               <p className="text-xs text-muted-foreground">
-                I'll configure vendor restrictions, citizenship verification
+                I&apos;ll configure vendor restrictions, citizenship verification
                 requirements, and export control classification tracking. You
                 should verify these settings with your export compliance officer.
               </p>
@@ -144,7 +144,7 @@ export function GovernmentDetailsStep() {
         <div className="p-4 bg-muted/50 rounded-lg">
           <p className="text-sm text-muted-foreground">
             <strong className="text-foreground">Small business tracking:</strong>{" "}
-            I'll set up tracking for SB, SDB, WOSB, HUBZone, and SDVOSB
+            I&apos;ll set up tracking for SB, SDB, WOSB, HUBZone, and SDVOSB
             categories with standard federal goals. You can adjust percentages
             later.
           </p>

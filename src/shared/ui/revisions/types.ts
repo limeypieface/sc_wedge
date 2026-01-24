@@ -39,7 +39,7 @@ export const SO_TERMINOLOGY: RevisionTerminology = {
 /**
  * Approval step status
  */
-export type ApprovalStepStatus = "pending" | "approved" | "rejected"
+export type ApprovalStepStatus = "pending" | "approved" | "rejected" | "skipped"
 
 /**
  * Approver information

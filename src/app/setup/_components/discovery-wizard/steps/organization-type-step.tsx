@@ -50,7 +50,7 @@ export function OrganizationTypeStep() {
           Do you work with government contracts?
         </h1>
         <p className="text-muted-foreground">
-          Government contracting has specific compliance requirements that I'll
+          Government contracting has specific compliance requirements that I&apos;ll
           configure for you.
         </p>
       </div>
@@ -113,7 +113,7 @@ export function OrganizationTypeStep() {
             <li>• Export control classification (ECCN)</li>
           </ul>
           <p className="text-xs text-muted-foreground/70 pt-2">
-            I'll ask a few more questions about your specific requirements.
+            I&apos;ll ask a few more questions about your specific requirements.
           </p>
         </div>
       )}

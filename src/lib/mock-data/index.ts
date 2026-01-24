@@ -10,16 +10,26 @@
  *   import * as soData from "@/lib/mock-data/so"
  */
 
-// Re-export all domains
+// Re-export shared data (foundation)
 export * from "./shared"
 export * from "./config"
-export * from "./po"
-export * from "./so"
 
-// Named domain exports for clarity
+// Named domain exports for clarity (to avoid conflicts)
 import * as poMockData from "./po"
 import * as soMockData from "./so"
 import * as sharedMockData from "./shared"
 import * as configData from "./config"
 
 export { poMockData, soMockData, sharedMockData, configData }
+
+// Explicit PO exports (avoiding conflicts with shared)
+export {
+  poHeader,
+  lineItems,
+  initialRevisions as poRevisions,
+  computePOTotals,
+  getPOData,
+} from "./po"
+
+// SO exports should come from so module when needed
+// Use soMockData namespace for SO-specific items

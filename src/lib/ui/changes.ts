@@ -5,9 +5,23 @@
  * Useful for revision diffs, audit trails, and edit indicators.
  */
 
-import type { Money, Quantity, Timestamp } from '../../engines/_kernel';
-import { moneyToDecimal, compareMoney } from '../../engines/_kernel';
-import { formatMoney, formatQuantity, formatDate, formatMoneyDelta } from './formatters';
+import {
+  type Money,
+  type Quantity,
+  type Timestamp,
+  moneyToDecimal,
+  formatMoney,
+  formatQuantity,
+  formatDate,
+  formatMoneyDelta
+} from './formatters';
+
+// Helper to compare two Money values
+function compareMoney(a: Money | null | undefined, b: Money | null | undefined): number {
+  const aVal = a ? moneyToDecimal(a) : 0;
+  const bVal = b ? moneyToDecimal(b) : 0;
+  return aVal - bVal;
+}
 
 // ============================================================================
 // Field Change Types

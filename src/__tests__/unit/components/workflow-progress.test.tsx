@@ -6,18 +6,12 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { WorkflowProgress } from '../../../app/supply/purchase-orders/_components/revision-status-panel/workflow-progress';
-import { RevisionStatus } from '../../../types/enums';
+import { WorkflowProgress } from '@/shared/ui/revisions/workflow-progress';
+import type { RevisionWorkflowStatus } from '@/shared/ui/revisions/types';
 
 describe('WorkflowProgress', () => {
-  it('should render workflow progress title', () => {
-    render(<WorkflowProgress status={RevisionStatus.Draft} />);
-
-    expect(screen.getByText('Workflow Progress')).toBeInTheDocument();
-  });
-
   it('should render all workflow step labels', () => {
-    render(<WorkflowProgress status={RevisionStatus.Draft} />);
+    render(<WorkflowProgress status="draft" />);
 
     expect(screen.getByText('Draft')).toBeInTheDocument();
     expect(screen.getByText('Approval')).toBeInTheDocument();
@@ -26,46 +20,47 @@ describe('WorkflowProgress', () => {
     expect(screen.getByText('Active')).toBeInTheDocument();
   });
 
-  it('should highlight completed steps for Draft status', () => {
-    const { container } = render(<WorkflowProgress status={RevisionStatus.Draft} />);
+  it('should highlight completed steps for draft status', () => {
+    const { container } = render(<WorkflowProgress status="draft" />);
 
-    // First step should be highlighted (bg-primary)
-    const progressBars = container.querySelectorAll('.rounded-full');
-    expect(progressBars.length).toBe(5);
+    // First step should be highlighted
+    const circles = container.querySelectorAll('.rounded-full');
+    expect(circles.length).toBe(5);
 
-    // At Draft status (index 0), only first bar should be primary
-    expect(progressBars[0].className).toContain('bg-primary');
+    // At draft status (index 0), first circle should have ring
+    expect(circles[0].className).toContain('ring-2');
   });
 
-  it('should highlight more steps for PendingApproval status', () => {
-    const { container } = render(<WorkflowProgress status={RevisionStatus.PendingApproval} />);
+  it('should highlight more steps for pending_approval status', () => {
+    const { container } = render(<WorkflowProgress status="pending_approval" />);
 
-    const progressBars = container.querySelectorAll('.rounded-full');
+    const circles = container.querySelectorAll('.rounded-full');
 
-    // First two steps should be highlighted
-    expect(progressBars[0].className).toContain('bg-primary');
-    expect(progressBars[1].className).toContain('bg-primary');
+    // First circle should be completed (bg-primary, no ring)
+    expect(circles[0].className).toContain('bg-primary');
+    // Second circle should be current (with ring)
+    expect(circles[1].className).toContain('ring-2');
   });
 
-  it('should highlight all steps for Acknowledged status', () => {
-    const { container } = render(<WorkflowProgress status={RevisionStatus.Acknowledged} />);
+  it('should highlight all steps for active status', () => {
+    const { container } = render(<WorkflowProgress status="active" />);
 
-    const progressBars = container.querySelectorAll('.rounded-full');
+    const circles = container.querySelectorAll('.rounded-full');
 
-    // All steps should be highlighted
-    progressBars.forEach(bar => {
-      expect(bar.className).toContain('bg-primary');
+    // All circles should be primary colored
+    circles.forEach(circle => {
+      expect(circle.className).toContain('bg-primary');
     });
   });
 
   it('should show muted color for incomplete steps', () => {
-    const { container } = render(<WorkflowProgress status={RevisionStatus.Draft} />);
+    const { container } = render(<WorkflowProgress status="draft" />);
 
-    const progressBars = container.querySelectorAll('.rounded-full');
+    const circles = container.querySelectorAll('.rounded-full');
 
     // Steps after current should be muted
-    expect(progressBars[2].className).toContain('bg-muted');
-    expect(progressBars[3].className).toContain('bg-muted');
-    expect(progressBars[4].className).toContain('bg-muted');
+    expect(circles[2].className).toContain('bg-muted');
+    expect(circles[3].className).toContain('bg-muted');
+    expect(circles[4].className).toContain('bg-muted');
   });
 });

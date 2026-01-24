@@ -115,6 +115,7 @@ vi.mock('framer-motion', () => ({
   useAnimation: () => ({ start: vi.fn(), stop: vi.fn() }),
   useMotionValue: (initial: number) => ({ get: () => initial, set: vi.fn() }),
   useTransform: () => ({ get: () => 0 }),
+  useReducedMotion: () => false,
 }));
 
 // Mock window.matchMedia for components that use it

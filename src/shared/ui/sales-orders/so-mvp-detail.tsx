@@ -14,25 +14,31 @@
  */
 
 import { useState, useRef } from "react"
-import { Edit, Download, ChevronDown, Upload, Trash2, Plus, Eye, FileText, GripVertical, CalendarIcon, CheckCircle2 } from "lucide-react"
+import { Edit, Download, ChevronDown, Upload, Trash2, Plus, Eye, FileText, GripVertical, CalendarIcon, CheckCircle2, History, Phone, Mail, Inbox, Sparkles } from "lucide-react"
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/shared/ui/button"
+import { Card } from "@/shared/ui/card"
+import { Badge } from "@/shared/ui/badge"
+import { Label } from "@/shared/ui/label"
+import { Input } from "@/shared/ui/input"
+import { Textarea } from "@/shared/ui/textarea"
+import { Separator } from "@/shared/ui/separator"
+import { Checkbox } from "@/shared/ui/checkbox"
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group"
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/shared/ui/table"
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover"
+import { Calendar } from "@/shared/ui/calendar"
 import { cn } from "@/lib/utils"
 
-import { SOLineStatusPill } from "@/components/so-line-status-pill"
-import { getPOData, computePOTotals, type LineItem, type POCharge } from "@/lib/mock-data"
+import { SOLineStatusPill } from "@/shared/ui/sales-orders/so-line-status-pill"
+import { LineDetailModal } from "@/shared/ui/modals/line-detail-modal"
+import { EditLineModal, type LineEditData } from "@/shared/ui/modals/edit-line-modal"
+import { AddLineModal, type NewLineData } from "@/shared/ui/modals/add-line-modal"
+import { getPOData, computePOTotals, getChargesByLine, type LineItem, type POCharge } from "@/lib/mock-data"
+import { ExpandableToolbar } from "@/shared/ui/expandable-toolbar"
+import { POPDFDownload } from "@/shared/ui/purchase-orders/po-pdf-download"
+import { useEmailContext } from "@/context/EmailContext"
 
 // ============================================================================
 // TYPES
@@ -61,21 +67,9 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
   const soHeader = soData?.header
   const customerContact = soData?.vendorContact
 
-  if (!soHeader) {
-    return (
-      <div className="p-8 text-center">
-        <h1 className="text-xl font-semibold mb-2">Sales Order Not Found</h1>
-        <p className="text-muted-foreground">Could not find SO: {soNumber}</p>
-        <Link href="/sales/sales-orders" className="text-primary underline mt-4 inline-block">
-          Back to Sales Orders
-        </Link>
-      </div>
-    )
-  }
-
-  // State
-  const [lines, setLines] = useState<LineItem[]>(soData.lineItems)
-  const [charges] = useState<POCharge[]>(soData.charges || [])
+  // State - must be declared before any early returns
+  const [lines, setLines] = useState<LineItem[]>(soData?.lineItems || [])
+  const [charges] = useState<POCharge[]>(soData?.charges || [])
   const [lineDisplayMode, setLineDisplayMode] = useState<'basic' | 'quantity' | 'financial'>('basic')
   const [attachments, setAttachments] = useState<MVPAttachment[]>([])
   const [clauses, setClauses] = useState<string[]>([])
@@ -88,11 +82,36 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
 
   // Header edit state
   const [isHeaderEditOpen, setIsHeaderEditOpen] = useState(false)
-  const [headerShippingMethod, setHeaderShippingMethod] = useState(soHeader.shipping?.method || '')
-  const [headerPaymentTerms, setHeaderPaymentTerms] = useState(soHeader.payment?.terms || '')
+  const [headerShippingMethod, setHeaderShippingMethod] = useState(soHeader?.shipping?.method || '')
+  const [headerPaymentTerms, setHeaderPaymentTerms] = useState(soHeader?.payment?.terms || '')
   const [headerPromisedDate, setHeaderPromisedDate] = useState<Date | undefined>(
-    soHeader.dates?.promised ? new Date(soHeader.dates.promised) : undefined
+    soHeader?.dates?.promised ? new Date(soHeader.dates.promised) : undefined
   )
+
+  // General info expandable state
+  const [isGeneralInfoExpanded, setIsGeneralInfoExpanded] = useState(false)
+
+  // Line modal state
+  const [selectedLine, setSelectedLine] = useState<LineItem | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddLineModalOpen, setIsAddLineModalOpen] = useState(false)
+
+  // Get email context
+  const { openEmailModal } = useEmailContext()
+
+  // Early return if SO not found (after all hooks)
+  if (!soHeader) {
+    return (
+      <div className="p-8 text-center">
+        <h1 className="text-xl font-semibold mb-2">Sales Order Not Found</h1>
+        <p className="text-muted-foreground">Could not find SO: {soNumber}</p>
+        <Link href="/sales/sales-orders" className="text-primary underline mt-4 inline-block">
+          Back to Sales Orders
+        </Link>
+      </div>
+    )
+  }
 
   // Calculate totals
   const soTotals = computePOTotals(lines, charges)
@@ -113,6 +132,68 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
   const formatDateForDisplay = (date: Date | undefined) => {
     if (!date) return 'N/A'
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  // Line item handlers
+  const handleViewLine = (line: LineItem) => {
+    setSelectedLine(line)
+    setIsViewModalOpen(true)
+  }
+
+  const handleEditLine = (line: LineItem) => {
+    setSelectedLine(line)
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditModalSave = (editData: LineEditData) => {
+    if (!selectedLine) return
+
+    const newQty = editData.quantity || selectedLine.quantity
+    const newPrice = editData.unitPrice || selectedLine.unitPrice
+    const newPromisedDate = editData.promisedDate || selectedLine.promisedDate
+
+    // Update line
+    setLines(prev => prev.map(line => {
+      if (line.id !== selectedLine.id) return line
+      const newLineTotal = newQty * newPrice
+      return {
+        ...line,
+        quantity: newQty,
+        quantityOrdered: newQty,
+        unitPrice: newPrice,
+        promisedDate: newPromisedDate,
+        lineTotal: newLineTotal,
+      }
+    }))
+
+    setIsEditModalOpen(false)
+    setSelectedLine(null)
+  }
+
+  // Handle add line (from shared AddLineModal component)
+  const handleAddLine = (newLine: NewLineData) => {
+    const nextLineNumber = lines.length > 0 ? Math.max(...lines.map(l => l.lineNumber)) + 1 : 1
+    const lineTotal = newLine.quantity * newLine.unitPrice
+    const taxAmount = lineTotal * 0.0825 // Default tax rate
+
+    const newLineItem: LineItem = {
+      id: Date.now(),
+      lineNumber: nextLineNumber,
+      sku: newLine.sku,
+      name: newLine.name,
+      description: newLine.description || '',
+      quantity: newLine.quantity,
+      quantityOrdered: newLine.quantity,
+      unitPrice: newLine.unitPrice,
+      unitOfMeasure: newLine.unitOfMeasure || 'EA',
+      lineTotal: lineTotal,
+      taxAmount: taxAmount,
+      lineTotalWithTax: lineTotal + taxAmount,
+      status: 'pending',
+    }
+
+    setLines(prev => [...prev, newLineItem])
+    setIsAddLineModalOpen(false)
   }
 
   // Format file size
@@ -181,6 +262,7 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
   }
 
   return (
+    <>
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-muted/30 border-b shrink-0 z-10">
@@ -202,64 +284,103 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
             </Link>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Sales Order {soNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {soHeader.supplier?.name || soHeader.vendorName} • Created {soHeader.dates?.created || soHeader.createdDate}
-          </p>
+          {/* Title and Actions Row */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Sales Order {soNumber}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {soHeader.supplier?.name || soHeader.vendorName} • Created {soHeader.dates?.created || soHeader.createdDate}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => openEmailModal({ contextType: "general", poNumber: soHeader.poNumber })} title="Email customer">
+                <Mail className="w-4 h-4" />
+              </Button>
+
+              <ExpandableToolbar>
+                <Button size="sm" variant="ghost" title="Documents">
+                  <FileText className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" title="Activity">
+                  <History className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" title="AI Summary">
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsHeaderEditOpen(true)} title="Edit">
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <POPDFDownload
+                  poHeader={soHeader}
+                  lineItems={lines}
+                  charges={charges}
+                  vendorContact={customerContact}
+                  version="1.0"
+                  showLabel={false}
+                />
+              </ExpandableToolbar>
+
+              <Button size="sm" className="bg-primary text-primary-foreground">Create Shipment</Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6 max-w-5xl">
-          {/* Order Details Card */}
-          <Card>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold">Order Details</h3>
-                <Button variant="outline" size="sm" onClick={() => setIsHeaderEditOpen(!isHeaderEditOpen)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
+          {/* General Information - Collapsible */}
+          <Card className="border border-border">
+            <div className={`px-6 py-3 ${isGeneralInfoExpanded ? "border-b border-border" : ""}`}>
+              <div
+                className="flex items-center justify-between mb-2 cursor-pointer hover:bg-muted/30 transition-colors p-2 -m-2"
+                onClick={() => setIsGeneralInfoExpanded(!isGeneralInfoExpanded)}
+              >
+                <div className="text-sm font-semibold text-foreground">General Information</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsHeaderEditOpen(true)
+                    }}
+                    className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title="Edit SO details"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isGeneralInfoExpanded ? "rotate-180" : ""}`}
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {/* Always visible: Top row */}
+              <div className="grid grid-cols-4 gap-6">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Customer</Label>
-                  <p className="text-sm font-medium mt-1">{soHeader.supplier?.name || soHeader.vendorName}</p>
+                  <div className="text-xs text-muted-foreground mb-1">Customer</div>
+                  <div className="text-sm font-medium">{soHeader.supplier?.name || soHeader.vendorName}</div>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Sales Rep</Label>
-                  <p className="text-sm mt-1">{soHeader.buyer || '—'}</p>
+                  <div className="text-xs text-muted-foreground mb-1">Sales Rep</div>
+                  <div className="text-sm font-medium">{soHeader.buyer || '—'}</div>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Created Date</Label>
-                  <p className="text-sm mt-1">{soHeader.dates?.created || soHeader.createdDate || '—'}</p>
+                  <div className="text-xs text-muted-foreground mb-1">Ordered</div>
+                  <div className="text-sm font-medium">{soHeader.dates?.created || soHeader.createdDate || '—'}</div>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Promised Date</Label>
-                  <p className="text-sm mt-1">
-                    {headerPromisedDate ? formatDateForDisplay(headerPromisedDate) : (soHeader.dates?.promised || '—')}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Payment Terms</Label>
-                  <p className="text-sm mt-1">{headerPaymentTerms || soHeader.payment?.terms || '—'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Shipping Method</Label>
-                  <p className="text-sm mt-1">{headerShippingMethod || soHeader.shipping?.method || '—'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Currency</Label>
-                  <p className="text-sm mt-1">{soHeader.currency || 'USD'}</p>
+                  <div className="text-xs text-muted-foreground mb-1">Urgency</div>
+                  <Badge className={`text-xs w-fit ${soHeader.urgency === "critical" ? "bg-destructive/10 text-destructive" : soHeader.urgency === "high" ? "bg-amber-100 text-amber-800" : "bg-primary/10 text-primary"}`}>
+                    {soHeader.urgency === "low" ? "Not urgent" : soHeader.urgency?.charAt(0).toUpperCase() + soHeader.urgency?.slice(1)}
+                  </Badge>
                 </div>
               </div>
 
-              {/* Customer Acknowledgment */}
-              <div className="mt-4 pt-4 border-t">
+              {/* Customer Confirmation */}
+              <div className="mt-4 pt-3 border-t border-border/50">
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id="mvp-acknowledged"
@@ -293,6 +414,106 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
                 </div>
               </div>
             </div>
+
+            {/* Expanded: Additional details + Customer & Shipping info */}
+            {isGeneralInfoExpanded && (
+              <div className="px-6 py-4 bg-muted/5 space-y-6">
+                {/* Additional SO details row */}
+                <div className="grid grid-cols-4 gap-6">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">SO Type</div>
+                    <div className="text-sm font-medium">Standard</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Payment Terms</div>
+                    <div className="text-sm font-medium">{headerPaymentTerms || soHeader.payment?.terms || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Currency</div>
+                    <div className="text-sm font-medium">{soHeader.currency || 'USD'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">FOB Terms</div>
+                    <div className="text-sm font-medium">{soHeader.shipping?.instructions || "—"}</div>
+                  </div>
+                </div>
+
+                {/* Customer Information & Shipping - Two Column Layout */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Customer Information */}
+                  <div className="bg-background border border-border rounded-lg p-5">
+                    <h3 className="text-sm font-semibold mb-4">Customer Information</h3>
+
+                    <div className="space-y-4">
+                      {/* Contact Person */}
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-2">Contact Person</div>
+                        <div className="border border-border rounded-lg p-3 bg-muted/30">
+                          <div className="font-medium text-sm">{customerContact?.name || 'John Smith'}</div>
+                          <div className="text-xs text-muted-foreground mb-2">{customerContact?.title || 'Procurement Manager'}</div>
+                          <div className="flex items-center text-xs mb-1">
+                            <Phone className="w-3 h-3 mr-2 text-muted-foreground" />
+                            <span>{customerContact?.phone || '+1-555-123-4567'}</span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openEmailModal({ contextType: "general", poNumber: soHeader.poNumber })
+                            }}
+                            className="flex items-center text-xs text-primary hover:underline cursor-pointer"
+                          >
+                            <Mail className="w-3 h-3 mr-2" />
+                            <span>{customerContact?.email || 'john.smith@customer.com'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-2">Address</div>
+                        <div className="border border-border rounded-lg p-3 bg-muted/30">
+                          <div className="font-medium text-sm mb-1">123 Main Street</div>
+                          <div className="text-xs text-muted-foreground mb-2">
+                            Los Angeles, CA, 90001, US
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">Shipping</Badge>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">Billing</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shipping / Fulfillment */}
+                  <div className="bg-background border border-border rounded-lg p-5">
+                    <h3 className="text-sm font-semibold mb-4">Shipping / Fulfillment</h3>
+
+                    <div className="space-y-4">
+                      {/* Ship From */}
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-2">Ship From</div>
+                        <div className="flex items-center text-sm font-medium gap-2">
+                          <Inbox className="w-4 h-4" />
+                          <span>Main Warehouse</span>
+                        </div>
+                      </div>
+
+                      {/* Shipping Address */}
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-2">Shipping Address</div>
+                        <div className="border border-border rounded-lg p-3 bg-muted/30">
+                          <div className="font-medium text-sm mb-1">Customer Location</div>
+                          <div className="text-xs text-muted-foreground">
+                            123 Main Street, Los Angeles, CA, 90001, US
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Line Items */}
@@ -300,24 +521,35 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold">Line Items ({lines.length})</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">View:</span>
-                  <ToggleGroup
-                    type="single"
-                    value={lineDisplayMode}
-                    onValueChange={(v) => v && setLineDisplayMode(v as 'basic' | 'quantity' | 'financial')}
-                    className="bg-muted/50 rounded-md p-0.5"
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">View:</span>
+                    <ToggleGroup
+                      type="single"
+                      value={lineDisplayMode}
+                      onValueChange={(v) => v && setLineDisplayMode(v as 'basic' | 'quantity' | 'financial')}
+                      className="bg-muted/50 rounded-md p-0.5"
+                    >
+                      <ToggleGroupItem value="basic" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                        Basic
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="quantity" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                        Quantity
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="financial" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                        Financial
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddLineModalOpen(true)}
+                    className="h-7 text-xs gap-1"
                   >
-                    <ToggleGroupItem value="basic" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                      Basic
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="quantity" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                      Quantity
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="financial" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                      Financial
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                    <Plus className="h-3 w-3" />
+                    Add Line
+                  </Button>
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -393,14 +625,26 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
                           </>
                         )}
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                            title="View details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                              title="View details"
+                              onClick={() => handleViewLine(line)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                              title="Edit line"
+                              onClick={() => handleEditLine(line)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -540,7 +784,9 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
           </Card>
         </div>
       </div>
+    </div>
 
+      {/* Modals */}
       {/* Add Clause Modal */}
       {isAddClauseOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -566,6 +812,44 @@ export function SOMVPDetail({ soNumber }: SOMVPDetailProps) {
           </Card>
         </div>
       )}
-    </div>
+
+      {/* Line View Modal */}
+      {selectedLine && isViewModalOpen && (
+        <LineDetailModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false)
+            setSelectedLine(null)
+          }}
+          item={selectedLine}
+          orderNumber={soNumber}
+          variant="sales"
+          mode="mvp"
+        />
+      )}
+
+      {/* Line Edit Modal */}
+      {selectedLine && (
+        <EditLineModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setSelectedLine(null)
+          }}
+          onSave={handleEditModalSave}
+          line={selectedLine}
+          lineCharges={getChargesByLine(selectedLine.lineNumber)}
+          mode="mvp"
+        />
+      )}
+
+      {/* Add Line Modal */}
+      <AddLineModal
+        isOpen={isAddLineModalOpen}
+        onClose={() => setIsAddLineModalOpen(false)}
+        onAdd={handleAddLine}
+        mode="mvp"
+      />
+    </>
   )
 }

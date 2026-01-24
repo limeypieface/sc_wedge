@@ -27,7 +27,7 @@ describe('Race Condition Handling', () => {
     it('should ignore stale responses when PO number changes rapidly', async () => {
       const { result, rerender } = renderHook(
         ({ poNumber }) => usePurchaseOrder(poNumber),
-        { initialProps: { poNumber: 'PO-0861' } }
+        { initialProps: { poNumber: 'PO-2026-00142' } }
       );
 
       // Wait for first request to complete
@@ -51,7 +51,7 @@ describe('Race Condition Handling', () => {
     });
 
     it('should handle multiple rapid refetches correctly', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -87,7 +87,7 @@ describe('Race Condition Handling', () => {
     it('should not update state after unmount', async () => {
       const consoleError = jest.spyOn(console, 'error').mockImplementation();
 
-      const { result, unmount } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result, unmount } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       // Request is in flight
       expect(result.current.loading).toBe(true);
@@ -111,7 +111,7 @@ describe('Race Condition Handling', () => {
     it('should clean up properly on PO number change', async () => {
       const { result, rerender, unmount } = renderHook(
         ({ poNumber }) => usePurchaseOrder(poNumber),
-        { initialProps: { poNumber: 'PO-0861' } }
+        { initialProps: { poNumber: 'PO-2026-00142' } }
       );
 
       await waitFor(() => {
@@ -137,7 +137,7 @@ describe('Race Condition Handling', () => {
     it('should track request sequence correctly', async () => {
       const { result, rerender } = renderHook(
         ({ poNumber }) => usePurchaseOrder(poNumber),
-        { initialProps: { poNumber: 'PO-0861' } }
+        { initialProps: { poNumber: 'PO-2026-00142' } }
       );
 
       // First request
@@ -156,7 +156,7 @@ describe('Race Condition Handling', () => {
       });
 
       // Data should still be consistent
-      expect(result.current.purchaseOrder?.header.poNumber).toBe('PO-0861');
+      expect(result.current.purchaseOrder?.header.poNumber).toBe('PO-2026-00142');
     });
   });
 
@@ -166,7 +166,7 @@ describe('Race Condition Handling', () => {
      * Expected: Final state should be consistent
      */
     it('should handle concurrent refetch calls', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -203,7 +203,7 @@ describe('Race Condition Handling', () => {
   describe('Skip Option Race Conditions', () => {
     it('should handle skip toggling correctly', async () => {
       const { result, rerender } = renderHook(
-        ({ skip }) => usePurchaseOrder('PO-0861', { skip }),
+        ({ skip }) => usePurchaseOrder('PO-2026-00142', { skip }),
         { initialProps: { skip: true } }
       );
 
@@ -243,7 +243,7 @@ describe('Error Recovery', () => {
     expect(result.current.error).toBeDefined();
 
     // Switch to valid PO
-    rerender({ poNumber: 'PO-0861' });
+    rerender({ poNumber: 'PO-2026-00142' });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

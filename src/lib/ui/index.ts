@@ -77,7 +77,7 @@ export {
   // Reference patterns
   STATUS_STAGE_PERCENT,
   COMMON_STAGE_PATTERNS,
-} from './status-icons';
+} from '@/shared/ui/icons/status-icons';
 
 // Change Indicators
 export {

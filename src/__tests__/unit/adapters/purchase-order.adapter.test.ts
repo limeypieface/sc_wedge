@@ -21,7 +21,7 @@ import type { POCharge, LineItem } from '../../../app/supply/purchase-orders/_li
 describe('Purchase Order Adapter', () => {
   describe('fetchPurchaseOrder', () => {
     it('should return purchase order data for valid PO number', async () => {
-      const result = await fetchPurchaseOrder('PO-0861');
+      const result = await fetchPurchaseOrder('PO-2026-00142');
 
       expect(result).toBeDefined();
       expect(result.purchaseOrder).toBeDefined();
@@ -31,7 +31,7 @@ describe('Purchase Order Adapter', () => {
     });
 
     it('should include all required PO data sections', async () => {
-      const result = await fetchPurchaseOrder('PO-0861');
+      const result = await fetchPurchaseOrder('PO-2026-00142');
       const po = result.purchaseOrder;
 
       expect(po.header).toBeDefined();
@@ -43,7 +43,7 @@ describe('Purchase Order Adapter', () => {
     });
 
     it('should return correct totals structure', async () => {
-      const result = await fetchPurchaseOrder('PO-0861');
+      const result = await fetchPurchaseOrder('PO-2026-00142');
       const totals = result.purchaseOrder.totals;
 
       expect(typeof totals.subtotal).toBe('number');
@@ -62,10 +62,10 @@ describe('Purchase Order Adapter', () => {
 
   describe('fetchPurchaseOrderHeader', () => {
     it('should return header for valid PO number', async () => {
-      const header = await fetchPurchaseOrderHeader('PO-0861');
+      const header = await fetchPurchaseOrderHeader('PO-2026-00142');
 
       expect(header).toBeDefined();
-      expect(header.poNumber).toBe('PO-0861');
+      expect(header.poNumber).toBe('PO-2026-00142');
     });
 
     it('should throw error for invalid PO number', async () => {
@@ -75,14 +75,14 @@ describe('Purchase Order Adapter', () => {
 
   describe('fetchLineItems', () => {
     it('should return array of line items', async () => {
-      const lineItems = await fetchLineItems('PO-0861');
+      const lineItems = await fetchLineItems('PO-2026-00142');
 
       expect(Array.isArray(lineItems)).toBe(true);
       expect(lineItems.length).toBeGreaterThan(0);
     });
 
     it('should have required line item properties', async () => {
-      const lineItems = await fetchLineItems('PO-0861');
+      const lineItems = await fetchLineItems('PO-2026-00142');
       const firstItem = lineItems[0];
 
       expect(firstItem).toHaveProperty('id');
@@ -95,7 +95,7 @@ describe('Purchase Order Adapter', () => {
 
   describe('fetchCharges', () => {
     it('should return array of charges', async () => {
-      const charges = await fetchCharges('PO-0861');
+      const charges = await fetchCharges('PO-2026-00142');
 
       expect(Array.isArray(charges)).toBe(true);
     });
@@ -103,7 +103,7 @@ describe('Purchase Order Adapter', () => {
 
   describe('fetchVendorContact', () => {
     it('should return vendor contact info', async () => {
-      const contact = await fetchVendorContact('PO-0861');
+      const contact = await fetchVendorContact('PO-2026-00142');
 
       expect(contact).toBeDefined();
       expect(contact).toHaveProperty('name');

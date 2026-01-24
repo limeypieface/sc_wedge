@@ -73,6 +73,8 @@ export function useApprovalContext<T>(
  * Metrics for PO revision approvals
  */
 export interface PORevisionMetrics {
+  /** Index signature for Record compatibility */
+  readonly [key: string]: number | string | boolean;
   /** Total cost change in dollars */
   readonly totalCostChange: number;
   /** Absolute value of cost change */

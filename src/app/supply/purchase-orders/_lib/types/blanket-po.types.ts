@@ -7,6 +7,7 @@
  */
 
 import { POHeader, LineItem, POCharge, PODiscount, POTotals, VendorContact } from "./purchase-order.types";
+import { POType } from "@/types/enums";
 
 // ============================================================================
 // BLANKET PO TERMS
@@ -85,7 +86,7 @@ export interface BlanketUtilization {
  */
 export interface BlanketPOHeader extends POHeader {
   /** Must be BLANKET for blanket POs */
-  poType: "BLANKET";
+  poType: typeof POType.Blanket;
 
   /** Blanket terms and limits */
   blanketTerms: BlanketPOTerms;
@@ -105,7 +106,7 @@ export interface BlanketPOHeader extends POHeader {
  */
 export interface ReleasePOHeader extends POHeader {
   /** Must be RELEASE for release orders */
-  poType: "RELEASE";
+  poType: typeof POType.Release;
 
   /** Parent blanket PO number */
   parentBlanketPO: string;

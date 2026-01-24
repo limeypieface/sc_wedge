@@ -214,7 +214,8 @@ export function RevisionProvider({
 
   const canSubmit = useMemo(() => {
     // Can submit if there's a draft with changes, or a rejected revision that can be resubmitted
-    const status = pendingDraftRevision?.status
+    if (!pendingDraftRevision) return false
+    const status = pendingDraftRevision.status
     return (
       (status === RevisionStatus.Draft || status === RevisionStatus.Rejected) &&
       pendingDraftRevision.changes.length > 0

@@ -34,13 +34,13 @@ describe('Revision Adapter', () => {
   describe('Query Functions', () => {
     describe('fetchRevisions', () => {
       it('should return array of revisions', async () => {
-        const revisions = await fetchRevisions('PO-0861');
+        const revisions = await fetchRevisions('PO-2026-00142');
 
         expect(Array.isArray(revisions)).toBe(true);
       });
 
       it('should return revisions sorted by version (newest first)', async () => {
-        const revisions = await fetchRevisions('PO-0861');
+        const revisions = await fetchRevisions('PO-2026-00142');
 
         if (revisions.length > 1) {
           for (let i = 0; i < revisions.length - 1; i++) {
@@ -54,7 +54,7 @@ describe('Revision Adapter', () => {
 
     describe('fetchActiveRevision', () => {
       it('should return the active revision if exists', async () => {
-        const active = await fetchActiveRevision('PO-0861');
+        const active = await fetchActiveRevision('PO-2026-00142');
 
         if (active) {
           expect(active.isActive).toBe(true);
@@ -70,7 +70,7 @@ describe('Revision Adapter', () => {
 
     describe('fetchDraftRevision', () => {
       it('should return null when no draft exists', async () => {
-        const draft = await fetchDraftRevision('PO-0861');
+        const draft = await fetchDraftRevision('PO-2026-00142');
 
         // Initially there should be no draft
         expect(draft).toBeNull();
@@ -92,7 +92,7 @@ describe('Revision Adapter', () => {
           expect(approver).toHaveProperty('id');
           expect(approver).toHaveProperty('name');
           expect(approver).toHaveProperty('role');
-          expect(approver).toHaveProperty('level');
+          expect(approver).toHaveProperty('approvalLimit');
         }
       });
     });
@@ -111,14 +111,14 @@ describe('Revision Adapter', () => {
 
     beforeEach(async () => {
       // Get active revision to use as base for draft
-      const active = await fetchActiveRevision('PO-0861');
+      const active = await fetchActiveRevision('PO-2026-00142');
       if (active) {
         mockActiveRevision = active;
       } else {
         // Create a mock if none exists
         mockActiveRevision = {
           id: 'rev-test',
-          poNumber: 'PO-0861',
+          poNumber: 'PO-2026-00142',
           version: '1.0',
           status: RevisionStatus.Acknowledged,
           lineItems: [],
@@ -134,7 +134,7 @@ describe('Revision Adapter', () => {
     describe('createDraftRevision', () => {
       it('should create a new draft revision', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -146,7 +146,7 @@ describe('Revision Adapter', () => {
 
       it('should increment version number', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -158,7 +158,7 @@ describe('Revision Adapter', () => {
 
       it('should copy line items from active revision', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -170,7 +170,7 @@ describe('Revision Adapter', () => {
     describe('addChangeToDraft', () => {
       it('should add change to draft revision', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -212,7 +212,7 @@ describe('Revision Adapter', () => {
     describe('submitForApproval', () => {
       it('should change status to PendingApproval', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -242,7 +242,7 @@ describe('Revision Adapter', () => {
 
       it('should create approval chain', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -270,7 +270,7 @@ describe('Revision Adapter', () => {
       it('should advance approval chain', async () => {
         // Create and submit draft
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -305,7 +305,7 @@ describe('Revision Adapter', () => {
     describe('rejectRevision', () => {
       it('should set status to Rejected', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -334,7 +334,7 @@ describe('Revision Adapter', () => {
 
       it('should record rejection notes', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
@@ -364,14 +364,14 @@ describe('Revision Adapter', () => {
     describe('discardDraft', () => {
       it('should remove draft revision', async () => {
         const draft = await createDraftRevision(
-          'PO-0861',
+          'PO-2026-00142',
           mockActiveRevision,
           'user-1'
         );
 
         await discardDraft(draft.id);
 
-        const checkDraft = await fetchDraftRevision('PO-0861');
+        const checkDraft = await fetchDraftRevision('PO-2026-00142');
         expect(checkDraft).toBeNull();
       });
 

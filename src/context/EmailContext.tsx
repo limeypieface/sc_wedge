@@ -11,6 +11,7 @@ export type EmailContextType =
   | "quality"
   | "follow_up"
   | "change_order"
+  | "revision_send"    // Send revision for approval/notification
   | "rma_request"      // Initial RMA request to supplier/customer
   | "rma_follow_up"    // Follow up on pending authorization
   | "rma_authorized"   // Confirm receipt of authorization

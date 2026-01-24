@@ -27,10 +27,10 @@ import {
   Calendar,
 } from "lucide-react"
 import { openRequisitionLines, type OpenRequisitionLine } from "@/lib/mock-data"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Card } from "@/shared/ui/card"
+import { Button } from "@/shared/ui/button"
+import { Badge } from "@/shared/ui/badge"
+import { Input } from "@/shared/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,14 +38,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
+} from "@/shared/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { IssueRef } from "@/components/issue-ref"
-import { IssueCard, IssueSection, type IssueCardData } from "@/components/issue-card"
-import { POViewSelector, type POViewMode } from "@/components/po-view-selector"
-import { POHeadersTable, type ExtendedPO } from "@/components/po-headers-table"
-import { POLinesTable, type POLineItem } from "@/components/po-lines-table"
-import { LineDisplaySelector, type LineViewMode } from "@/components/line-display-selector"
+import { IssueRef } from "@/shared/ui/issues/issue-ref"
+import { IssueCard, IssueSection, type IssueCardData } from "@/shared/ui/issues/issue-card"
+import { POViewSelector, type POViewMode } from "@/shared/ui/purchase-orders/po-view-selector"
+import { POHeadersTable, type ExtendedPO } from "@/shared/ui/purchase-orders/po-headers-table"
+import { POLinesTable, type POLineItem } from "@/shared/ui/purchase-orders/po-lines-table"
+import { LineDisplaySelector, type LineViewMode } from "@/shared/ui/purchase-orders/line-display-selector"
 
 // =============================================================================
 // MOCK DATA - Multiple POs for a buyer view
@@ -1510,12 +1510,11 @@ export function BuyerDashboard() {
                       sku: issue.sku,
                       shipmentId: issue.shipmentId,
                       quantity: issue.quantity,
-                      amount: issue.amount,
+                      amount: "amount" in issue ? issue.amount : undefined,
                       onEmailClick: () => console.log("Email for", issue.id),
                       onCreateRMA: issue.category === "ncr" ? () => console.log("Create RMA for", issue.id) : undefined,
                       onTrackClick: issue.shipmentId ? () => console.log("Track", issue.shipmentId) : undefined,
                     }))}
-                  showOrderRef={true}
                 />
               )}
 
@@ -1537,11 +1536,10 @@ export function BuyerDashboard() {
                       sku: issue.sku,
                       shipmentId: issue.shipmentId,
                       quantity: issue.quantity,
-                      amount: issue.amount,
+                      amount: "amount" in issue ? issue.amount : undefined,
                       onEmailClick: () => console.log("Email for", issue.id),
                       onTrackClick: issue.shipmentId ? () => console.log("Track", issue.shipmentId) : undefined,
                     }))}
-                  showOrderRef={true}
                 />
               )}
 

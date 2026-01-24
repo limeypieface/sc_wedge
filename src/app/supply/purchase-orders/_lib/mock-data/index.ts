@@ -8,7 +8,7 @@
  * the extended totals properly update when qty/price change.
  */
 
-import { LineItemStatus } from "../../../../types/enums";
+import { LineItemStatus } from "@/types/enums";
 import type {
   POHeader,
   LineItem,

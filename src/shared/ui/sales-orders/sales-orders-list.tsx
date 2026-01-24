@@ -2,10 +2,42 @@
 
 import Link from "next/link"
 import { Search, SlidersHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { getStatusIcon, type StatusStage } from "@/lib/ui/status-icons"
+import { Button } from "@/shared/ui/button"
+import { getStatusIcon, type StatusStage } from "@/shared/ui/icons/status-icons"
 import { getInitials, getAvatarColor, formatPastRelativeDate, formatFutureDate } from "@/lib/ui/formatters"
-import { type SalesOrderStatus, SALES_ORDER_STATUS_META } from "@/app/sales/sales-orders/_lib/types"
+
+/**
+ * Local sales order status type for list view
+ */
+type SalesOrderStatus =
+  | "draft"
+  | "pending_approval"
+  | "approved"
+  | "sent"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "completed"
+  | "cancelled"
+  | "on_hold"
+
+/**
+ * Status metadata for display
+ */
+const SALES_ORDER_STATUS_META: Record<SalesOrderStatus, { label: string }> = {
+  draft: { label: "Draft" },
+  pending_approval: { label: "Pending Approval" },
+  approved: { label: "Approved" },
+  sent: { label: "Sent" },
+  confirmed: { label: "Confirmed" },
+  processing: { label: "Processing" },
+  shipped: { label: "Shipped" },
+  delivered: { label: "Delivered" },
+  completed: { label: "Completed" },
+  cancelled: { label: "Cancelled" },
+  on_hold: { label: "On Hold" },
+}
 
 /**
  * Avatar badge colors for customers

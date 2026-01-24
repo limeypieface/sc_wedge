@@ -12,7 +12,7 @@
  */
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/shared/ui/button"
 import { Check, Bell, Mail, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { RevisionTerminology } from "./types"

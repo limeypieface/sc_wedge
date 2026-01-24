@@ -10,4 +10,4 @@ export {
   type DiscoveryStep,
   type SetupPhase,
   type ConfigSection,
-} from "./configuration-context";
+} from "@/context/configuration-context";

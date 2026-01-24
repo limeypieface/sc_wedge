@@ -16,15 +16,15 @@ import {
   Link as LinkIcon,
   Info,
 } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/shared/ui/switch"
+import { Button } from "@/shared/ui/button"
+import { Badge } from "@/shared/ui/badge"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/shared/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useFeatureFlags } from "@/context/FeatureFlagsContext"
 import {

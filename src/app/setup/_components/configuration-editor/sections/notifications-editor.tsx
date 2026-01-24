@@ -14,7 +14,7 @@ import {
   CardTitle,
   Switch,
   Separator,
-} from "@/components/ui";
+} from "@/shared/ui";
 import { useConfiguration } from "@/lib/contexts";
 
 export function NotificationsEditor() {

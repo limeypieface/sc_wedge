@@ -3,7 +3,7 @@ import {
   getStatusIcon,
   createStatusStageMapping,
   type StatusStage,
-} from "@/lib/ui/status-icons";
+} from "@/shared/ui/icons/status-icons";
 
 // Define the enum locally since we don't have GraphQL codegen
 export enum PurchaseOrderStatus {

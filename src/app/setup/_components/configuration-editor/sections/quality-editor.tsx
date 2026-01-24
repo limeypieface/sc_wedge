@@ -24,7 +24,7 @@ import {
   Label,
   Switch,
   Separator,
-} from "@/components/ui";
+} from "@/shared/ui";
 import { useConfiguration } from "@/lib/contexts";
 import { InspectionLevel } from "@/types/configuration.types";
 import { cn } from "@/lib/utils";

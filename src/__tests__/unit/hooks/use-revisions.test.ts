@@ -23,13 +23,13 @@ describe('useRevisions', () => {
 
   describe('Initial State', () => {
     it('should start with loading true', () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       expect(result.current.loading).toBe(true);
     });
 
     it('should start with empty revisions array', () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       expect(result.current.revisions).toEqual([]);
     });
@@ -37,7 +37,7 @@ describe('useRevisions', () => {
 
   describe('Data Fetching', () => {
     it('should fetch revisions for valid PO', async () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -47,7 +47,7 @@ describe('useRevisions', () => {
     });
 
     it('should set loading to false after fetch', async () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -55,7 +55,7 @@ describe('useRevisions', () => {
     });
 
     it('should provide refetch function', async () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -67,7 +67,7 @@ describe('useRevisions', () => {
 
   describe('Active Revision', () => {
     it('should return active revision if exists', async () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -82,7 +82,7 @@ describe('useRevisions', () => {
 
   describe('Draft Revision', () => {
     it('should return undefined draft initially', async () => {
-      const { result } = renderHook(() => useRevisions('PO-0861'));
+      const { result } = renderHook(() => useRevisions('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -116,7 +116,8 @@ describe('useApprovers', () => {
       const approver = result.current.approvers[0];
       expect(approver).toHaveProperty('id');
       expect(approver).toHaveProperty('name');
-      expect(approver).toHaveProperty('level');
+      expect(approver).toHaveProperty('role');
+      expect(approver).toHaveProperty('approvalLimit');
     }
   });
 });

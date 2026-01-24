@@ -37,9 +37,9 @@
  * ```
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card"
+import { Separator } from "@/shared/ui/separator"
+import { Badge } from "@/shared/ui/badge"
 import { cn } from "@/lib/utils"
 
 import { WorkflowProgress } from "./workflow-progress"

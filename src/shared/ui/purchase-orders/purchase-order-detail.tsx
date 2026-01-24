@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from "react"
 import { Edit, Download, ChevronDown, ChevronUp, Phone, Mail, Inbox, Sparkles, AlertCircle, FileText, MessageSquare, ChevronsRight, AlertTriangle, CheckCircle2, Clock, FileWarning, ShieldCheck, GitBranch, Zap, Search, FileCheck, FlaskConical, Eye, Truck, Package, CircleDot } from "lucide-react"
-import { ExpandableToolbar } from "@/components/ui/expandable-toolbar"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ActivityTimeline } from "@/components/activity-timeline"
-import { IssuesTab } from "@/components/issues-tab"
-import { DocumentsPanel } from "@/components/documents-panel"
-import { QualityTab } from "@/components/quality-tab"
-import { LineDisplaySelector } from "@/components/line-display-selector"
-import { FinancialsTab } from "@/components/financials-tab"
-import { ComplianceTab } from "@/components/compliance-tab"
-import { LineDetailModal } from "@/components/line-detail-modal"
-import { LineStatusPill } from "@/components/line-status-pill"
+import { ExpandableToolbar } from "@/shared/ui/expandable-toolbar"
+import { Button } from "@/shared/ui/button"
+import { Card } from "@/shared/ui/card"
+import { Badge } from "@/shared/ui/badge"
+import { ActivityTimeline } from "@/shared/ui/activity-timeline"
+import { IssuesTab } from "@/shared/ui/issues/issues-tab"
+import { DocumentsPanel } from "@/shared/ui/documents/documents-panel"
+import { QualityTab } from "@/shared/ui/quality-tab"
+import { LineDisplaySelector } from "@/shared/ui/purchase-orders/line-display-selector"
+import { FinancialsTab } from "@/shared/ui/financials-tab"
+import { ComplianceTab } from "@/shared/ui/compliance-tab"
+import { LineDetailModal } from "@/shared/ui/modals/line-detail-modal"
+import { LineStatusPill } from "@/shared/ui/purchase-orders/line-status-pill"
 import { useChatContext } from "@/context/ChatContext"
-import { POStatusSelect } from "@/components/po-status-select"
+import { POStatusSelect } from "@/shared/ui/purchase-orders/po-status-select"
 import { PurchaseOrderStatus, PurchaseOrderStatusMeta } from "@/types/purchase-order-status"
-import { ReceivingTab } from "@/components/receiving-tab"
-import { VoipCallModal } from "@/components/voip-call-modal"
-import { EmailComposeModal } from "@/components/email-compose-modal"
+import { ReceivingTab } from "@/shared/ui/receiving-tab"
+import { VoipCallModal } from "@/shared/ui/modals/voip-call-modal"
+import { EmailComposeModal } from "@/shared/ui/modals/email-compose-modal"
 import { cn } from "@/lib/utils"
 import { getTaxRate, calculateLineFinancials } from "@/lib/tax-config"
 import {
@@ -39,30 +39,45 @@ import {
   getPOData,
   checkLineReqAuthorization,
   type LineItem,
+  type LineItemNeed,
   type POCharge,
   type POData,
   type ToleranceStatus,
   type POIssue,
 } from "@/lib/mock-data"
-import { IssueCountBadge, LineIssuesBadge } from "@/components/issue-count-badge"
-import { ExpediteModal, type ExpediteLineData } from "@/components/expedite-modal"
-import { EditLineModal, type LineEditData } from "@/components/edit-line-modal"
-import { EditChargeModal, type ChargeUpdates } from "@/components/edit-charge-modal"
-import { EditHeaderModal, type HeaderEditData } from "@/components/edit-header-modal"
-import { AddLineModal, type NewLineData } from "@/components/add-line-modal"
+import { IssueCountBadge, LineIssuesBadge } from "@/shared/ui/issues/issue-count-badge"
+import { ExpediteModal, type ExpediteLineData } from "@/shared/ui/modals/expedite-modal"
+import { EditLineModal, type LineEditData } from "@/shared/ui/modals/edit-line-modal"
+import { EditChargeModal, type ChargeUpdates } from "@/shared/ui/modals/edit-charge-modal"
+import { EditHeaderModal, type HeaderEditData } from "@/shared/ui/modals/edit-header-modal"
+import { AddLineModal, type NewLineData } from "@/shared/ui/modals/add-line-modal"
 import { useEmailContext } from "@/context/EmailContext"
 import { useIssuePanel } from "@/context/IssuePanelContext"
 import { RevisionProvider, useRevision } from "@/context/RevisionContext"
-import { RevisionBadge } from "@/components/revision-badge"
-import { RevisionTabs } from "@/components/revision-tabs"
-import { RevisionStatusPanel } from "@/components/revision-status-panel"
-import { ApprovalActionButtons } from "@/components/approval-action-buttons"
-import { UserSwitcher } from "@/components/user-switcher"
-import { RevisionHistory } from "@/components/revision-history"
+import { RevisionBadge } from "@/shared/ui/revisions/revision-badge"
+import { RevisionTabs } from "@/shared/ui/revisions/revision-tabs"
+import { RevisionStatusPanel } from "@/shared/ui/revisions/revision-status-panel"
+import { ApprovalActionButtons } from "@/shared/ui/approvals/approval-action-buttons"
+import { UserSwitcher } from "@/shared/ui/user-switcher"
+import { RevisionHistory } from "@/shared/ui/revisions/revision-history"
 import { RevisionStatus } from "@/types/revision-status"
-import { ReqAuthorizationSummary } from "@/components/req-authorization-summary"
-import { POPDFDownload } from "@/components/po-pdf-download"
-import { FinancialBreakdown, type FinancialBreakdownData, type FinancialCharge, type FinancialDiscount } from "@/components/financial-breakdown"
+import type { RevisionWorkflowStatus } from "@/shared/ui/revisions/types"
+import { ReqAuthorizationSummary } from "@/shared/ui/req-authorization-summary"
+import { POPDFDownload } from "@/shared/ui/purchase-orders/po-pdf-download"
+import { FinancialBreakdown, type FinancialBreakdownData, type FinancialCharge, type FinancialDiscount } from "@/shared/ui/financial-breakdown"
+
+// Map RevisionStatus enum to RevisionWorkflowStatus
+function mapRevisionStatus(status: RevisionStatus): RevisionWorkflowStatus {
+  const mapping: Record<RevisionStatus, RevisionWorkflowStatus> = {
+    [RevisionStatus.Draft]: "draft",
+    [RevisionStatus.PendingApproval]: "pending_approval",
+    [RevisionStatus.Approved]: "approved",
+    [RevisionStatus.Sent]: "sent",
+    [RevisionStatus.Acknowledged]: "active",
+    [RevisionStatus.Rejected]: "rejected",
+  }
+  return mapping[status] || "draft"
+}
 
 const LINE_STATUSES = ["draft", "issued", "open", "partially received", "received", "closed", "on hold", "canceled"]
 
@@ -167,6 +182,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     recordAcknowledgment,
     canApprove,
     canSkipApproval,
+    currentUser,
   } = useRevision()
 
   // Format currency
@@ -191,12 +207,12 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
 
   const handleSendToSupplier = () => {
     // Open email modal with revision details
-    const changes = pendingDraftRevision?.changes.map(c => c.description) || []
+    const changes = pendingDraftRevision?.changes.map(c => ({ description: c.description })) || []
     openEmailModal({
       contextType: "revision_send",
       poNumber: poHeader.poNumber,
       revisionVersion: pendingDraftRevision?.version || "3.0",
-      changesSummary: changes,
+      changes,
     })
     // Update revision status to Sent
     sendToSupplier()
@@ -204,12 +220,12 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
 
   const handleSkipApprovalAndSend = () => {
     // Open email modal with revision details (same as regular send)
-    const changes = pendingDraftRevision?.changes.map(c => c.description) || []
+    const changes = pendingDraftRevision?.changes.map(c => ({ description: c.description })) || []
     openEmailModal({
       contextType: "revision_send",
       poNumber: poHeader.poNumber,
       revisionVersion: pendingDraftRevision?.version || "3.0",
-      changesSummary: changes,
+      changes,
     })
     // Skip approval and update revision status to Sent
     skipApprovalAndSend()
@@ -245,7 +261,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       const expediteCharge = {
         id: `CHG-EXP-${Date.now()}`,
         type: "expedite" as const,
-        name: `Expedite Fees (${expeditedLines.length} line${expeditedLines.length > 1 ? 's' : ''})`,
+        description: `Expedite Fees (${expeditedLines.length} line${expeditedLines.length > 1 ? 's' : ''})`,
         calculation: "fixed" as const,
         rate: totalExpediteCharges,
         amount: totalExpediteCharges,
@@ -342,7 +358,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
             updated.push({
               id: change.id,
               type: change.type,
-              name: change.name,
+              description: change.name,
               calculation: "fixed",
               rate: change.amount,
               amount: change.amount,
@@ -352,7 +368,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
             })
           } else if (change.action === "edit") {
             updated = updated.map(c =>
-              c.id === change.id ? { ...c, amount: change.amount, name: change.name } : c
+              c.id === change.id ? { ...c, amount: change.amount, description: change.name } : c
             )
           }
         })
@@ -452,8 +468,8 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     if (oldCharge.amount !== updates.amount) {
       changes.push(`amount $${oldCharge.amount.toFixed(2)} → $${updates.amount.toFixed(2)}`)
     }
-    if (oldCharge.name !== updates.name) {
-      changes.push(`description "${oldCharge.name}" → "${updates.name}"`)
+    if (oldCharge.description !== updates.name) {
+      changes.push(`description "${oldCharge.description}" → "${updates.name}"`)
     }
     if (oldCharge.type !== updates.type) {
       changes.push(`type ${oldCharge.type} → ${updates.type}`)
@@ -462,10 +478,10 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     if (changes.length > 0) {
       addChangeToDraft({
         field: "charge",
-        previousValue: `${oldCharge.name}: $${oldCharge.amount.toFixed(2)}`,
+        previousValue: `${oldCharge.description}: $${oldCharge.amount.toFixed(2)}`,
         newValue: `${updates.name}: $${updates.amount.toFixed(2)}`,
         editType: "critical",
-        description: `Updated ${oldCharge.name} fee: ${changes.join(', ')}`,
+        description: `Updated ${oldCharge.description} fee: ${changes.join(', ')}`,
       })
     }
 
@@ -491,10 +507,10 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     // Track the change in the draft
     addChangeToDraft({
       field: "charge",
-      previousValue: `${removedCharge.name}: $${removedCharge.amount.toFixed(2)}`,
+      previousValue: `${removedCharge.description}: $${removedCharge.amount.toFixed(2)}`,
       newValue: null,
       editType: "critical",
-      description: `Removed ${removedCharge.name} fee: -$${removedCharge.amount.toFixed(2)}`,
+      description: `Removed ${removedCharge.description} fee: -$${removedCharge.amount.toFixed(2)}`,
     })
 
     // Open the revision sidebar
@@ -516,7 +532,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       shipping: {
         ...prev.shipping,
         method: editData.shippingMethod ?? prev.shipping.method,
-        terms: editData.shippingTerms ?? prev.shipping.terms,
+        instructions: editData.shippingTerms ?? prev.shipping.instructions,
       },
       payment: {
         ...prev.payment,
@@ -537,7 +553,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
             updated.push({
               id: change.id,
               type: change.type,
-              name: change.name,
+              description: change.name,
               calculation: "fixed",
               rate: change.amount,
               amount: change.amount,
@@ -546,7 +562,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
             })
           } else if (change.action === "edit") {
             updated = updated.map(c =>
-              c.id === change.id ? { ...c, amount: change.amount, name: change.name } : c
+              c.id === change.id ? { ...c, amount: change.amount, description: change.name } : c
             )
           }
         })
@@ -614,13 +630,13 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     const taxAmount = netAmount * newLineData.taxRate
 
     // Build the need object
-    const lineNeed = {
+    const lineNeed: LineItemNeed = {
+      id: `NEED-${Date.now()}`,
       moNumber: newLineData.need?.moNumber || "",
-      moLineNumber: 1,
-      customerName: newLineData.need?.customer || "",
+      woNumber: "",
       qtyNeeded: newLineData.quantity,
-      needDate: newLineData.need?.needDate || newLineData.promisedDate,
-      priority: "standard" as const,
+      dateNeeded: newLineData.need?.needDate || newLineData.promisedDate,
+      customer: newLineData.need?.customer,
     }
 
     // Create the new line item matching LineItem interface
@@ -640,15 +656,14 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       warehouseId: "WH-001",
       promisedDate: newLineData.promisedDate,
       originalDueDate: newLineData.promisedDate,
+      acknowledgedStatus: "pending",
+      acknowledgedDate: null,
       projectCode: newLineData.projectCode,
       commodityCode: newLineData.commodityCode,
       requisitionNumber: newLineData.requisitionNumber || "",
       requisitionLineNumber: newLineData.requisitionLineNumber || 0,
       itemRevision: newLineData.itemRevision,
       leadTimeDays: String(newLineData.leadTimeDays),
-      reqAuthorizedQty: newLineData.quantity,
-      reqAuthorizedUnitPrice: newLineData.unitPrice,
-      reqAuthorizedTotal: netAmount,
       quantityOrdered: newLineData.quantity,
       quantityShipped: 0,
       quantityReceived: 0,
@@ -656,17 +671,14 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       quantityPaid: 0,
       quantityInQualityHold: 0,
       needs: [lineNeed],
-      need: lineNeed,
       discountPercent: newLineData.discountPercent,
       discountAmount,
       taxCode: newLineData.taxCode,
-      taxRate: newLineData.taxRate,
       taxAmount,
       expedite: false,
       expediteFee: undefined,
       qualityRequirements: newLineData.qualityRequirements,
       subtotal,
-      netAmount,
       lineTotalWithTax: netAmount + taxAmount,
     }
 
@@ -725,14 +737,14 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
         const discountPercent = Math.max(0, Math.min(100, Number(value) || 0))
         const discountAmount = (line.subtotal * discountPercent) / 100
         const netAmount = line.subtotal - discountAmount
-        const taxAmount = netAmount * line.taxRate
+        const taxRate = getTaxRate(line.taxCode)
+        const taxAmount = netAmount * taxRate
         const lineTotalWithTax = netAmount + taxAmount
 
         updated = {
           ...updated,
           discountPercent,
           discountAmount,
-          netAmount,
           taxAmount,
           lineTotalWithTax,
           lineTotal: netAmount, // Keep lineTotal in sync
@@ -740,14 +752,13 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       } else if (field === "taxCode") {
         const taxCode = value as "STANDARD" | "EXEMPT" | "REDUCED"
         const taxRate = getTaxRate(taxCode)
-        const netAmount = line.netAmount || line.lineTotal || 0
+        const netAmount = line.lineTotal || 0
         const taxAmount = Math.round(netAmount * taxRate * 100) / 100
         const lineTotalWithTax = Math.round((netAmount + taxAmount) * 100) / 100
 
         updated = {
           ...updated,
           taxCode,
-          taxRate,
           taxAmount,
           lineTotalWithTax,
         }
@@ -1019,7 +1030,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                   <tr className="bg-muted/10">
                     <td colSpan={2} className="py-2 px-3 text-right text-xs text-muted-foreground font-medium">
                       Order Charges
-                      <span className="ml-2 font-normal">({headerCharges.map(c => c.name).join(", ")})</span>
+                      <span className="ml-2 font-normal">({headerCharges.map(c => c.description).join(", ")})</span>
                     </td>
                     <td className="py-2 px-3 text-right text-muted-foreground/50">—</td>
                     <td className="py-2 px-3 text-right text-muted-foreground/50">—</td>
@@ -1411,7 +1422,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
             </thead>
             <tbody>
               {lineItems.map((item) => {
-                const needStatus = getLineNeedStatus(item)
+                const needStatus = getLineNeedStatus(item.lineNumber)
                 const primaryNeed = item.needs?.[0]
                 return (
                   <tr
@@ -1449,7 +1460,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className={`py-3 px-4 text-center ${needStatus.atRisk && !needStatus.fulfilled ? "text-amber-600" : ""}`}>
+                    <td className={`py-3 px-4 text-center ${needStatus.status === "at_risk" || needStatus.status === "critical" ? "text-amber-600" : ""}`}>
                       {primaryNeed ? (
                         <div className="flex flex-col items-center">
                           <span>{primaryNeed.dateNeeded}</span>
@@ -1475,12 +1486,12 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                     </td>
                     <td className="py-3 px-4 text-center tabular-nums">{item.quantityAccepted}</td>
                     <td className="py-3 px-4 text-center">
-                      {needStatus.fulfilled ? (
+                      {needStatus.status === "ok" ? (
                         <span className="inline-flex items-center gap-1 text-xs text-primary">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Fulfilled
                         </span>
-                      ) : needStatus.atRisk ? (
+                      ) : needStatus.status === "at_risk" || needStatus.status === "critical" ? (
                         <span className="inline-flex items-center gap-1 text-xs text-amber-600">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           At Risk
@@ -1603,35 +1614,35 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                       <span className="text-primary font-medium">{item.sku}</span>
                     </td>
                     <td className="py-3 px-2 text-center">
-                      {qr.inspectionRequired ? (
+                      {qr?.inspectionRequired ? (
                         <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
                       ) : (
                         <span className="text-muted-foreground/30">—</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center">
-                      {qr.cocRequired ? (
+                      {qr?.cocRequired ? (
                         <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
                       ) : (
                         <span className="text-muted-foreground/30">—</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center">
-                      {qr.faiRequired ? (
+                      {qr?.faiRequired ? (
                         <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
                       ) : (
                         <span className="text-muted-foreground/30">—</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center">
-                      {qr.mtrRequired ? (
+                      {qr?.mtrRequired ? (
                         <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
                       ) : (
                         <span className="text-muted-foreground/30">—</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center">
-                      {qr.sourceInspection ? (
+                      {qr?.sourceInspection ? (
                         <CheckCircle2 className="w-4 h-4 text-primary mx-auto" />
                       ) : (
                         <span className="text-muted-foreground/30">—</span>
@@ -1705,16 +1716,11 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
     urgency: poHeader.urgency,
     tasks: actionRequiredIssues.map((issue, idx) => ({
       id: idx + 1,
-      title: issue.title,
+      title: issue.title || issue.description,
       status: issue.priority === "critical" ? "critical" : "high",
       reason: issue.description,
-      createdBy: issue.assignee,
+      createdBy: "System",
       suggestedAction: issue.suggestedAction,
-      category: issue.category,
-      sku: issue.sku,
-      amount: issue.amount,
-      ncrId: issue.ncrId,
-      invoiceId: issue.invoiceId,
     })),
   }
 
@@ -1979,7 +1985,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                     </div>
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Owner</div>
-                      <div className="text-sm font-medium">{poHeader.buyer.name}</div>
+                      <div className="text-sm font-medium">{poHeader.buyer}</div>
                     </div>
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Ordered</div>
@@ -1988,7 +1994,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Urgency</div>
                       <Badge className={`text-xs w-fit ${poHeader.urgency === "critical" ? "bg-destructive/10 text-destructive" : poHeader.urgency === "high" ? "bg-amber-100 text-amber-800" : "bg-primary/10 text-primary"}`}>
-                        {poHeader.urgency === "standard" ? "Not urgent" : poHeader.urgency.charAt(0).toUpperCase() + poHeader.urgency.slice(1)}
+                        {poHeader.urgency === "low" ? "Not urgent" : poHeader.urgency.charAt(0).toUpperCase() + poHeader.urgency.slice(1)}
                       </Badge>
                     </div>
                   </div>
@@ -2048,11 +2054,11 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground mb-1">Currency</div>
-                        <div className="text-sm font-medium">{headerData.payment.currency}</div>
+                        <div className="text-sm font-medium">{headerData.currency}</div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground mb-1">FOB Terms</div>
-                        <div className="text-sm font-medium">{headerData.shipping.terms}</div>
+                        <div className="text-sm font-medium">{headerData.shipping.instructions || "—"}</div>
                       </div>
                     </div>
 
@@ -2225,11 +2231,11 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
           )}
 
           {activeTab === "activity" && <ActivityTimeline />}
-          {activeTab === "receiving" && <ReceivingTab lines={lines} poNumber={poNumber} />}
-          {activeTab === "documents" && <DocumentsPanel orderNumber={poNumber} orderType="po" />}
-          {activeTab === "quality" && <QualityTab lines={lines} poNumber={poNumber} />}
+          {activeTab === "receiving" && <ReceivingTab lineItems={lines} />}
+          {activeTab === "documents" && <DocumentsPanel orderNumber={poNumber || ""} orderType="po" />}
+          {activeTab === "quality" && <QualityTab />}
           {activeTab === "financials" && <FinancialsTab lines={lines} charges={charges} poNumber={poNumber} />}
-          {activeTab === "compliance" && <ComplianceTab lines={lines} />}
+          {activeTab === "compliance" && <ComplianceTab />}
         </div>
         </div>
 
@@ -2254,7 +2260,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              <IssuesTab poNumber={poNumber} />
+              <IssuesTab variant="po" orderNumber={poNumber} />
             </div>
           </>
         )}
@@ -2262,7 +2268,7 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
         {/* Documents Panel */}
         {documentsSidebarOpen && (
           <DocumentsPanel
-            orderNumber={poNumber}
+            orderNumber={poNumber || ""}
             orderType="po"
             onClose={() => setDocumentsSidebarOpen(false)}
           />
@@ -2301,10 +2307,27 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <RevisionStatusPanel
-                poNumber={poNumber}
-                onSendToSupplier={handleSendToSupplier}
-              />
+{pendingDraftRevision && (
+                <RevisionStatusPanel
+                  version={pendingDraftRevision.version}
+                  status={mapRevisionStatus(pendingDraftRevision.status)}
+                  currentUser={{ id: currentUser.id, isApprover: currentUser.isApprover }}
+                  costDeltaInfo={costDeltaInfo ? {
+                    delta: costDeltaInfo.delta,
+                    percentChange: costDeltaInfo.deltaPercent,
+                    exceedsThreshold: Math.abs(costDeltaInfo.deltaPercent) > 10, // 10% threshold
+                    previousTotal: costDeltaInfo.originalTotal,
+                    newTotal: costDeltaInfo.currentTotal,
+                  } : null}
+                  approvalChain={pendingDraftRevision.approvalChain}
+                  canSubmit={canApprove}
+                  canSendToExternalParty={pendingDraftRevision.status === RevisionStatus.Approved}
+                  canSkipApproval={canSkipApproval}
+                  requiresApproval={requiresApproval}
+                  onSendToExternalParty={handleSendToSupplier}
+                  onSkipApprovalAndSend={handleSkipApprovalAndSend}
+                />
+              )}
               {pendingDraftRevision?.status === RevisionStatus.Sent && (
                 <Button
                   onClick={handleRecordAcknowledgment}
@@ -2338,8 +2361,9 @@ function PurchaseOrderDetailContent({ poNumber }: { poNumber?: string }) {
       <VoipCallModal
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
-        vendorContact={vendorContact}
-        poNumber={poHeader.poNumber}
+        contact={vendorContact}
+        orderNumber={poHeader.poNumber}
+        variant="po"
       />
 
       <EmailComposeModal

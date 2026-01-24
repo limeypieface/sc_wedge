@@ -14,7 +14,7 @@
  * - Approver Message: When approver is viewing a draft
  */
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/shared/ui/button"
 import type { RevisionTerminology, RevisionWorkflowStatus } from "./types"
 import { PO_TERMINOLOGY } from "./types"
 

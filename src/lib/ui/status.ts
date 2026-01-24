@@ -4,7 +4,7 @@
  * Type-safe status configuration and display helpers.
  */
 
-import type { Timestamp } from '../../engines/_kernel';
+import type { Timestamp } from './formatters';
 
 // ============================================================================
 // Status Badge Configuration

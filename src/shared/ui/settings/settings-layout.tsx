@@ -23,8 +23,8 @@ import {
   ExternalLink,
   ToggleRight,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/shared/ui/button"
+import { Input } from "@/shared/ui/input"
 import { cn } from "@/lib/utils"
 import { PurchasingConfiguration } from "@/types/configuration.types"
 import { FeatureFlagsProvider } from "@/context/FeatureFlagsContext"
@@ -108,7 +108,7 @@ export function SettingsLayout() {
   // Save configuration changes
   const handleConfigChange = (updates: Partial<PurchasingConfiguration>) => {
     if (!config) return
-    const updated = { ...config, ...updates, updatedAt: new Date().toISOString() }
+    const updated = { ...config, ...updates, updatedAt: new Date() }
     setConfig(updated)
     localStorage.setItem("purchasingConfig", JSON.stringify(updated))
   }
@@ -240,10 +240,10 @@ export function SettingsLayout() {
             <VendorSettings config={config} onChange={handleConfigChange} />
           )}
           {config && activeSection === "government" && (
-            <GovernmentSettings config={config} onChange={handleConfigChange} />
+            <GovernmentSettings />
           )}
           {config && activeSection === "notifications" && (
-            <NotificationSettings config={config} onChange={handleConfigChange} />
+            <NotificationSettings />
           )}
 
           {/* Feature flags - always available */}

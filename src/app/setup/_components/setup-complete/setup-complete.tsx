@@ -8,7 +8,7 @@
  */
 
 import { Check, ArrowRight, Settings, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "@/shared/ui";
 import { useConfiguration } from "@/lib/contexts";
 import Link from "next/link";
 
@@ -37,7 +37,7 @@ export function SetupComplete() {
             Setup Complete
           </h1>
           <p className="text-muted-foreground">
-            Your procurement configuration has been saved. You're ready to start
+            Your procurement configuration has been saved. You&apos;re ready to start
             creating purchase orders.
           </p>
         </div>

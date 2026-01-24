@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { getStatusIcon } from "@/lib/ui/status-icons"
+import { getStatusIcon } from "@/shared/ui/icons/status-icons"
 import { getInitials, getAvatarColor, formatPastRelativeDate, formatFutureDate } from "@/lib/ui/formatters"
 
 /**

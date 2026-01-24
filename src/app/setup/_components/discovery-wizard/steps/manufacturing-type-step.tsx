@@ -103,7 +103,7 @@ export function ManufacturingTypeStep() {
           <p className="text-sm text-muted-foreground">
             <strong className="text-foreground">Good to know:</strong> Process
             manufacturing typically requires lot tracking and certificate of
-            analysis for traceability. I'll enable these by default.
+            analysis for traceability. I&apos;ll enable these by default.
           </p>
         </div>
       )}

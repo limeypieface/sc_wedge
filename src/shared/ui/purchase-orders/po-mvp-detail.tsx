@@ -15,32 +15,37 @@
  */
 
 import { useState, useRef } from "react"
-import { Edit, Download, Upload, Trash2, Plus, Eye, FileText, GripVertical, CalendarIcon, CheckCircle2, History, ChevronsRight, Ban, AlertTriangle } from "lucide-react"
+import { Edit, Download, Upload, Trash2, Plus, Eye, FileText, GripVertical, CalendarIcon, CheckCircle2, History, ChevronsRight, Ban, AlertTriangle, Phone, Mail, Inbox, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/shared/ui/button"
 import { usePOWorkflow, RevisionProvider, useRevision } from "@/context/RevisionContext"
-import { WorkflowStatusPanel } from "@/components/workflow-status-panel"
-import { RevisionStatusPanel } from "@/components/revision-status-panel"
-import { RevisionHistory } from "@/components/revision-history"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Switch } from "@/components/ui/switch"
+import { WorkflowStatusPanel } from "@/shared/ui/workflow-status-panel"
+import { RevisionStatusPanel } from "@/shared/ui/revisions/revision-status-panel"
+import { RevisionHistory } from "@/shared/ui/revisions/revision-history"
+import { Card } from "@/shared/ui/card"
+import { Badge } from "@/shared/ui/badge"
+import { Label } from "@/shared/ui/label"
+import { Input } from "@/shared/ui/input"
+import { Textarea } from "@/shared/ui/textarea"
+import { Separator } from "@/shared/ui/separator"
+import { Checkbox } from "@/shared/ui/checkbox"
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group"
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/shared/ui/table"
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover"
+import { Calendar } from "@/shared/ui/calendar"
+import { Switch } from "@/shared/ui/switch"
 import { cn } from "@/lib/utils"
 
-import { LineStatusPill } from "@/components/line-status-pill"
-import { LineStatusSelect } from "@/components/line-status-select"
-import { LineDetailModal } from "@/components/line-detail-modal"
+import { LineStatusPill } from "@/shared/ui/purchase-orders/line-status-pill"
+import { LineStatusSelect } from "@/shared/ui/purchase-orders/line-status-select"
+import { LineDetailModal } from "@/shared/ui/modals/line-detail-modal"
+import { EditLineModal, type LineEditData } from "@/shared/ui/modals/edit-line-modal"
+import { AddLineModal, type NewLineData } from "@/shared/ui/modals/add-line-modal"
+import { ExpandableToolbar } from "@/shared/ui/expandable-toolbar"
+import { POPDFDownload } from "@/shared/ui/purchase-orders/po-pdf-download"
+import { useEmailContext } from "@/context/EmailContext"
 import { getPOData, computePOTotals, getChargesByLine, type LineItem, type POCharge } from "@/lib/mock-data"
 import { LineItemStatus } from "@/types/enums"
 import type { MVPAttachment, MVPApprovalStatus, MVPLineItemExtensions } from "@/types/mvp-types"
@@ -99,20 +104,14 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
   // Revision sidebar state
   const [revisionSidebarOpen, setRevisionSidebarOpen] = useState(false)
 
-  if (!poHeader) {
-    return (
-      <div className="p-8 text-center">
-        <h1 className="text-xl font-semibold mb-2">Purchase Order Not Found</h1>
-        <p className="text-muted-foreground">Could not find PO: {poNumber}</p>
-        <Link href="/supply/purchase-orders" className="text-primary underline mt-4 inline-block">
-          Back to Purchase Orders
-        </Link>
-      </div>
-    )
-  }
+  // General info expandable state
+  const [isGeneralInfoExpanded, setIsGeneralInfoExpanded] = useState(false)
 
-  // State
-  const [lines, setLines] = useState<LineItem[]>(poData.lineItems)
+  // Get email context
+  const { openEmailModal } = useEmailContext()
+
+  // State - must be declared before any early returns
+  const [lines, setLines] = useState<LineItem[]>(poData?.lineItems || [])
   const [charges] = useState<POCharge[]>(poData.charges || [])
   const [lineDisplayMode, setLineDisplayMode] = useState<'basic' | 'quantity' | 'financial'>('basic')
   const [attachments, setAttachments] = useState<MVPAttachment[]>([])
@@ -134,7 +133,7 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
     const extensions: Record<number, MVPLineItemExtensions> = {}
     let physicalLineIndex = 0
 
-    poData.lineItems.forEach((line) => {
+    poData?.lineItems?.forEach((line) => {
       const qty = line.quantityOrdered || line.quantity
       const isServiceLine = line.sku?.startsWith('SVC-') || line.sku?.startsWith('SVC_') || line.name?.toLowerCase().includes('service')
 
@@ -233,6 +232,7 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [closingLine, setClosingLine] = useState<LineItem | null>(null)
   const [isCloseLineModalOpen, setIsCloseLineModalOpen] = useState(false)
+  const [isAddLineModalOpen, setIsAddLineModalOpen] = useState(false)
 
   // Edit form state
   const [editQty, setEditQty] = useState('')
@@ -249,16 +249,29 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
 
   // Header edit state
   const [isHeaderEditOpen, setIsHeaderEditOpen] = useState(false)
-  const [headerBuyer, setHeaderBuyer] = useState(poHeader.buyer || '')
+  const [headerBuyer, setHeaderBuyer] = useState(poHeader?.buyer || '')
   const [headerPromisedDate, setHeaderPromisedDate] = useState<Date | undefined>(
-    poHeader.dates?.promised ? new Date(poHeader.dates.promised) : undefined
+    poHeader?.dates?.promised ? new Date(poHeader.dates.promised) : undefined
   )
   const [headerRequestedDate, setHeaderRequestedDate] = useState<Date | undefined>(
-    poHeader.dates?.requested ? new Date(poHeader.dates.requested) : undefined
+    poHeader?.dates?.requested ? new Date(poHeader.dates.requested) : undefined
   )
-  const [headerShippingMethod, setHeaderShippingMethod] = useState(poHeader.shipping?.method || '')
-  const [headerShippingInstructions, setHeaderShippingInstructions] = useState(poHeader.shipping?.instructions || '')
-  const [headerPaymentTerms, setHeaderPaymentTerms] = useState(poHeader.payment?.terms || '')
+  const [headerShippingMethod, setHeaderShippingMethod] = useState(poHeader?.shipping?.method || '')
+  const [headerShippingInstructions, setHeaderShippingInstructions] = useState(poHeader?.shipping?.instructions || '')
+  const [headerPaymentTerms, setHeaderPaymentTerms] = useState(poHeader?.payment?.terms || '')
+
+  // Early return if PO not found (after all hooks)
+  if (!poHeader) {
+    return (
+      <div className="p-8 text-center">
+        <h1 className="text-xl font-semibold mb-2">Purchase Order Not Found</h1>
+        <p className="text-muted-foreground">Could not find PO: {poNumber}</p>
+        <Link href="/supply/purchase-orders" className="text-primary underline mt-4 inline-block">
+          Back to Purchase Orders
+        </Link>
+      </div>
+    )
+  }
 
   // Calculate totals
   const poTotals = computePOTotals(lines, charges)
@@ -520,6 +533,135 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
     setSelectedLine(null)
   }
 
+  // Handle edit modal save (from shared EditLineModal component)
+  const handleEditModalSave = (editData: LineEditData) => {
+    if (!selectedLine) return
+
+    const ext = lineExtensions[selectedLine.id]
+    const newQty = editData.quantity || selectedLine.quantity
+    const newPrice = editData.unitPrice || selectedLine.unitPrice
+    const newPromisedDate = editData.promisedDate || ext?.promisedDate
+
+    // Track changes
+    const changes: { field: string; oldValue: any; newValue: any; desc: string }[] = []
+
+    if (newQty !== selectedLine.quantity) {
+      changes.push({ field: 'quantity', oldValue: selectedLine.quantity, newValue: newQty, desc: `Line ${selectedLine.lineNumber}: Quantity ${selectedLine.quantity} → ${newQty}` })
+    }
+    if (newPrice !== selectedLine.unitPrice) {
+      changes.push({ field: 'unitPrice', oldValue: selectedLine.unitPrice, newValue: newPrice, desc: `Line ${selectedLine.lineNumber}: Unit Price ${formatCurrency(selectedLine.unitPrice)} → ${formatCurrency(newPrice)}` })
+    }
+
+    if (changes.length > 0) {
+      if (!hasPendingDraft) {
+        createDraft()
+        setAcknowledged(false)
+        setAcknowledgedAt(undefined)
+        setMvpApprovalStatus('draft')
+      }
+
+      changes.forEach(change => {
+        addChangeToDraft({
+          field: change.field,
+          previousValue: change.oldValue,
+          newValue: change.newValue,
+          editType: 'non_critical',
+          description: change.desc,
+        })
+      })
+
+      setRevisionSidebarOpen(true)
+
+      // Update line with calculations
+      setLines(prev => prev.map(line => {
+        if (line.id !== selectedLine.id) return line
+        const newLineTotal = newQty * newPrice
+        const isTaxable = ext?.isTaxable ?? true
+        const taxRate = ext?.taxRate ?? 8.25
+        const taxAmount = isTaxable ? newLineTotal * (taxRate / 100) : 0
+        const lineTotalWithTax = newLineTotal + taxAmount
+        return {
+          ...line,
+          quantity: newQty,
+          quantityOrdered: newQty,
+          unitPrice: newPrice,
+          promisedDate: newPromisedDate,
+          lineTotal: newLineTotal,
+          taxAmount,
+          lineTotalWithTax,
+        }
+      }))
+
+      // Update line extensions
+      setLineExtensions(prev => ({
+        ...prev,
+        [selectedLine.id]: {
+          ...prev[selectedLine.id],
+          promisedDate: newPromisedDate,
+          updatedAt: new Date().toISOString(),
+        }
+      }))
+    }
+
+    setIsEditModalOpen(false)
+    setSelectedLine(null)
+  }
+
+  // Handle add line (from shared AddLineModal component)
+  const handleAddLine = (newLine: NewLineData) => {
+    const nextLineNumber = lines.length > 0 ? Math.max(...lines.map(l => l.lineNumber)) + 1 : 1
+    const lineTotal = newLine.quantity * newLine.unitPrice
+    const taxAmount = lineTotal * 0.0825 // Default tax rate
+
+    const newLineItem: LineItem = {
+      id: Date.now(),
+      lineNumber: nextLineNumber,
+      sku: newLine.sku,
+      name: newLine.name,
+      description: newLine.description || '',
+      quantity: newLine.quantity,
+      quantityOrdered: newLine.quantity,
+      unitPrice: newLine.unitPrice,
+      unitOfMeasure: newLine.unitOfMeasure || 'EA',
+      lineTotal: lineTotal,
+      taxAmount: taxAmount,
+      lineTotalWithTax: lineTotal + taxAmount,
+      status: LineItemStatus.Pending,
+    }
+
+    setLines(prev => [...prev, newLineItem])
+
+    // Initialize line extensions for the new line
+    setLineExtensions(prev => ({
+      ...prev,
+      [newLineItem.id]: {
+        needByDate: undefined,
+        promisedDate: undefined,
+        leadTime: undefined,
+        isTaxable: true,
+        taxRate: 8.25,
+        inspectionRequired: false,
+        quantityShipped: 0,
+        quantityReceived: 0,
+        quantityInspected: 0,
+        quantityAccepted: 0,
+        quantityOnHold: 0,
+        lineStatus: 'pending',
+      }
+    }))
+
+    // Track the change for revision
+    handleVersionBump('line_added', `Line ${nextLineNumber}: ${newLine.name}`, null, {
+      lineNumber: nextLineNumber,
+      sku: newLine.sku,
+      name: newLine.name,
+      quantity: newLine.quantity,
+      unitPrice: newLine.unitPrice,
+    })
+
+    setIsAddLineModalOpen(false)
+  }
+
   // Save header edits
   const handleSaveHeaderEdit = () => {
     const changes: { field: string; oldValue: string; newValue: string; label: string }[] = []
@@ -567,6 +709,7 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
   }
 
   return (
+    <>
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-muted/30 border-b shrink-0 z-10">
@@ -618,13 +761,49 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
             </div>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Purchase Order {poNumber}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {poHeader.supplier?.name || poHeader.vendorName} • Created {poHeader.dates?.created || poHeader.createdDate}
-          </p>
+          {/* Title and Actions Row */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Purchase Order {poNumber}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {poHeader.supplier?.name || poHeader.vendorName} • Created {poHeader.dates?.created || poHeader.createdDate}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => openEmailModal({ contextType: "general", poNumber: poHeader.poNumber })} title="Email supplier">
+                <Mail className="w-4 h-4" />
+              </Button>
+
+              <ExpandableToolbar>
+                <Button size="sm" variant="ghost" title="Documents">
+                  <FileText className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" title="Activity">
+                  <History className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" title="AI Summary">
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsHeaderEditOpen(true)} title="Edit">
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <POPDFDownload
+                  poHeader={poHeader}
+                  lineItems={lines}
+                  charges={charges}
+                  vendorContact={vendorContact}
+                  version={activeRevision?.version || "1.0"}
+                  showLabel={false}
+                />
+              </ExpandableToolbar>
+
+              <Button size="sm" className="bg-primary text-primary-foreground">Receive</Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -633,51 +812,54 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-6 max-w-5xl">
-            {/* Order Details Card */}
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold">Order Details</h3>
-                  <Button variant="outline" size="sm" onClick={() => setIsHeaderEditOpen(true)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
+            {/* General Information - Collapsible */}
+            <Card className="border border-border">
+              <div className={`px-6 py-3 ${isGeneralInfoExpanded ? "border-b border-border" : ""}`}>
+                <div
+                  className="flex items-center justify-between mb-2 cursor-pointer hover:bg-muted/30 transition-colors p-2 -m-2"
+                  onClick={() => setIsGeneralInfoExpanded(!isGeneralInfoExpanded)}
+                >
+                  <div className="text-sm font-semibold text-foreground">General Information</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsHeaderEditOpen(true)
+                      }}
+                      className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      title="Edit PO details"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${isGeneralInfoExpanded ? "rotate-180" : ""}`}
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {/* Always visible: Top row */}
+                <div className="grid grid-cols-4 gap-6">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Supplier</Label>
-                    <p className="text-sm font-medium mt-1">{poHeader.supplier?.name || poHeader.vendorName}</p>
+                    <div className="text-xs text-muted-foreground mb-1">Supplier</div>
+                    <div className="text-sm font-medium">{poHeader.supplier?.name || poHeader.vendorName}</div>
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Buyer</Label>
-                    <p className="text-sm mt-1">{headerBuyer || poHeader.buyer || '—'}</p>
+                    <div className="text-xs text-muted-foreground mb-1">Owner</div>
+                    <div className="text-sm font-medium">{headerBuyer || poHeader.buyer || '—'}</div>
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Created Date</Label>
-                    <p className="text-sm mt-1">{poHeader.dates?.created || poHeader.createdDate || '—'}</p>
+                    <div className="text-xs text-muted-foreground mb-1">Ordered</div>
+                    <div className="text-sm font-medium">{poHeader.dates?.created || poHeader.createdDate || '—'}</div>
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Promised Date</Label>
-                    <p className="text-sm mt-1">
-                      {headerPromisedDate ? formatDateForDisplay(headerPromisedDate) : (poHeader.dates?.promised || '—')}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Payment Terms</Label>
-                    <p className="text-sm mt-1">{headerPaymentTerms || poHeader.payment?.terms || '—'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Shipping Method</Label>
-                    <p className="text-sm mt-1">{headerShippingMethod || poHeader.shipping?.method || '—'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Currency</Label>
-                    <p className="text-sm mt-1">{poHeader.currency || 'USD'}</p>
+                    <div className="text-xs text-muted-foreground mb-1">Urgency</div>
+                    <Badge className={`text-xs w-fit ${poHeader.urgency === "critical" ? "bg-destructive/10 text-destructive" : poHeader.urgency === "high" ? "bg-amber-100 text-amber-800" : "bg-primary/10 text-primary"}`}>
+                      {poHeader.urgency === "low" ? "Not urgent" : poHeader.urgency?.charAt(0).toUpperCase() + poHeader.urgency?.slice(1)}
+                    </Badge>
                   </div>
                 </div>
 
                 {/* Supplier Acknowledgment */}
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-4 pt-3 border-t border-border/50">
                   <div className="flex items-center gap-3">
                     <Checkbox
                       id="mvp-acknowledged"
@@ -718,6 +900,106 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Expanded: Additional details + Supplier & Shipping info */}
+              {isGeneralInfoExpanded && (
+                <div className="px-6 py-4 bg-muted/5 space-y-6">
+                  {/* Additional PO details row */}
+                  <div className="grid grid-cols-4 gap-6">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">PO Type</div>
+                      <div className="text-sm font-medium">Standard</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Payment Terms</div>
+                      <div className="text-sm font-medium">{headerPaymentTerms || poHeader.payment?.terms || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Currency</div>
+                      <div className="text-sm font-medium">{poHeader.currency || 'USD'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">FOB Terms</div>
+                      <div className="text-sm font-medium">{headerShippingInstructions || poHeader.shipping?.instructions || "—"}</div>
+                    </div>
+                  </div>
+
+                  {/* Supplier Information & Shipping / Receiving - Two Column Layout */}
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Supplier Information */}
+                    <div className="bg-background border border-border rounded-lg p-5">
+                      <h3 className="text-sm font-semibold mb-4">Supplier Information</h3>
+
+                      <div className="space-y-4">
+                        {/* Contact Person */}
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-2">Contact Person</div>
+                          <div className="border border-border rounded-lg p-3 bg-muted/30">
+                            <div className="font-medium text-sm">{vendorContact?.name || 'Daniel Thomas'}</div>
+                            <div className="text-xs text-muted-foreground mb-2">{vendorContact?.title || 'Sales Manager'}</div>
+                            <div className="flex items-center text-xs mb-1">
+                              <Phone className="w-3 h-3 mr-2 text-muted-foreground" />
+                              <span>{vendorContact?.phone || '+1-278-437-1129'}</span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openEmailModal({ contextType: "general", poNumber: poHeader.poNumber })
+                              }}
+                              className="flex items-center text-xs text-primary hover:underline cursor-pointer"
+                            >
+                              <Mail className="w-3 h-3 mr-2" />
+                              <span>{vendorContact?.email || 'daniel.thomas@flightechcontrollers.com'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Address */}
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-2">Address</div>
+                          <div className="border border-border rounded-lg p-3 bg-muted/30">
+                            <div className="font-medium text-sm mb-1">6437 Commerce Street</div>
+                            <div className="text-xs text-muted-foreground mb-2">
+                              Portland, OR, 97201, US
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">Shipping</Badge>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">Billing</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Shipping / Receiving */}
+                    <div className="bg-background border border-border rounded-lg p-5">
+                      <h3 className="text-sm font-semibold mb-4">Shipping / Receiving</h3>
+
+                      <div className="space-y-4">
+                        {/* Receive Into */}
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-2">Receive Into</div>
+                          <div className="flex items-center text-sm font-medium gap-2">
+                            <Inbox className="w-4 h-4" />
+                            <span>—</span>
+                          </div>
+                        </div>
+
+                        {/* Shipping Address */}
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-2">Shipping Address</div>
+                          <div className="border border-border rounded-lg p-3 bg-muted/30">
+                            <div className="font-medium text-sm mb-1">Main Office</div>
+                            <div className="text-xs text-muted-foreground">
+                              555 Innovation Dr, San Diego, CA, 92101, US
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* Line Items */}
@@ -725,24 +1007,35 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold">Line Items ({lines.length})</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">View:</span>
-                    <ToggleGroup
-                      type="single"
-                      value={lineDisplayMode}
-                      onValueChange={(v) => v && setLineDisplayMode(v as 'basic' | 'quantity' | 'financial')}
-                      className="bg-muted/50 rounded-md p-0.5"
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">View:</span>
+                      <ToggleGroup
+                        type="single"
+                        value={lineDisplayMode}
+                        onValueChange={(v) => v && setLineDisplayMode(v as 'basic' | 'quantity' | 'financial')}
+                        className="bg-muted/50 rounded-md p-0.5"
+                      >
+                        <ToggleGroupItem value="basic" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                          Basic
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="quantity" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                          Quantity
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="financial" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
+                          Financial
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddLineModalOpen(true)}
+                      className="h-7 text-xs gap-1"
                     >
-                      <ToggleGroupItem value="basic" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                        Basic
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="quantity" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                        Quantity
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="financial" size="sm" className="text-xs px-2 data-[state=on]:bg-background">
-                        Financial
-                      </ToggleGroupItem>
-                    </ToggleGroup>
+                      <Plus className="h-3 w-3" />
+                      Add Line
+                    </Button>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -1153,7 +1446,9 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
           )}
         </div>
       </div>
+    </div>
 
+      {/* Modals */}
       {/* Add Clause Modal */}
       {isAddClauseOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -1250,197 +1545,27 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
       )}
 
       {/* Edit Line Modal */}
-      {isEditModalOpen && selectedLine && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setIsEditModalOpen(false)} />
-          <Card className="relative z-50 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-2">Edit Line {selectedLine.lineNumber}</h2>
-              <p className="text-sm text-muted-foreground mb-6">{selectedLine.sku} - {selectedLine.name}</p>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="edit-qty">Quantity</Label>
-                    <Input
-                      id="edit-qty"
-                      type="number"
-                      value={editQty}
-                      onChange={(e) => setEditQty(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-price">Unit Price</Label>
-                    <Input
-                      id="edit-price"
-                      type="number"
-                      step="0.01"
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Dates</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Need By Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !editNeedByDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {editNeedByDate ? formatDateForDisplay(editNeedByDate) : "Select date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={editNeedByDate}
-                            onSelect={setEditNeedByDate}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div>
-                      <Label>Promised Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal mt-1",
-                              !editPromisedDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {editPromisedDate ? formatDateForDisplay(editPromisedDate) : "Select date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={editPromisedDate}
-                            onSelect={setEditPromisedDate}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="edit-leadtime">Lead Time (days)</Label>
-                    <Input
-                      id="edit-leadtime"
-                      type="number"
-                      value={editLeadTime}
-                      onChange={(e) => setEditLeadTime(e.target.value)}
-                      placeholder="e.g., 14"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="flex flex-col justify-end">
-                    <div className="flex items-center gap-3 h-10">
-                      <Switch
-                        id="edit-inspection"
-                        checked={editInspectionRequired}
-                        onCheckedChange={setEditInspectionRequired}
-                      />
-                      <Label htmlFor="edit-inspection" className="cursor-pointer">
-                        Incoming Inspection Required
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="edit-source">Source (PR/Requisition)</Label>
-                    <Input
-                      id="edit-source"
-                      type="text"
-                      value={editSourceRequestId}
-                      onChange={(e) => setEditSourceRequestId(e.target.value)}
-                      placeholder="e.g., REQ-2026-0089"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-project">Project</Label>
-                    <Input
-                      id="edit-project"
-                      type="text"
-                      value={editProjectId}
-                      onChange={(e) => setEditProjectId(e.target.value)}
-                      placeholder="e.g., PROJ-2025"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Status</h3>
-                  <LineStatusSelect
-                    value={editLineStatus}
-                    onChange={(value) => setEditLineStatus(value as LineItemStatus)}
-                    showLabel={false}
-                  />
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Tax Configuration</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col justify-end">
-                      <div className="flex items-center gap-3 h-10">
-                        <Switch
-                          id="edit-taxable"
-                          checked={editIsTaxable}
-                          onCheckedChange={setEditIsTaxable}
-                        />
-                        <Label htmlFor="edit-taxable" className="cursor-pointer">
-                          Taxable
-                        </Label>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-taxrate">Tax Rate (%)</Label>
-                      <Input
-                        id="edit-taxrate"
-                        type="number"
-                        step="0.01"
-                        value={editTaxRate}
-                        onChange={(e) => setEditTaxRate(e.target.value)}
-                        placeholder="e.g., 8.25"
-                        className="mt-1"
-                        disabled={!editIsTaxable}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-6 pt-4 border-t">
-                <Button variant="outline" className="flex-1" onClick={() => setIsEditModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="flex-1" onClick={handleSaveLineChanges}>
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
+      {selectedLine && (
+        <EditLineModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setSelectedLine(null)
+          }}
+          onSave={handleEditModalSave}
+          line={selectedLine}
+          lineCharges={getChargesByLine(selectedLine.lineNumber)}
+          mode="mvp"
+        />
       )}
+
+      {/* Add Line Modal */}
+      <AddLineModal
+        isOpen={isAddLineModalOpen}
+        onClose={() => setIsAddLineModalOpen(false)}
+        onAdd={handleAddLine}
+        mode="mvp"
+      />
 
       {/* Header Edit Modal */}
       {isHeaderEditOpen && (
@@ -1580,7 +1705,8 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
             setSelectedLine(null)
           }}
           item={selectedLine}
-          poNumber={poNumber}
+          orderNumber={poNumber}
+          mode="mvp"
         />
       )}
 
@@ -1665,6 +1791,6 @@ function POMVPDetailContent({ poNumber }: POMVPDetailProps) {
           </Card>
         </div>
       )}
-    </div>
+    </>
   )
 }

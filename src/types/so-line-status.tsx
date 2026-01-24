@@ -3,7 +3,7 @@ import {
   getStatusIcon,
   createStatusStageMapping,
   type StatusStage,
-} from "@/lib/ui/status-icons";
+} from "@/shared/ui/icons/status-icons";
 
 /**
  * Sales Order Line Status

@@ -6,16 +6,16 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { CostDeltaIndicator } from '../../../app/supply/purchase-orders/_components/revision-status-panel/cost-delta-indicator';
-import type { CostDeltaInfo } from '../../../app/supply/purchase-orders/_lib/types';
+import { CostDeltaIndicator } from '@/shared/ui/revisions/cost-delta-indicator';
+import type { CostDeltaInfo } from '@/shared/ui/revisions/types';
 
 describe('CostDeltaIndicator', () => {
   const createCostDelta = (overrides: Partial<CostDeltaInfo> = {}): CostDeltaInfo => ({
-    originalCost: 1000,
-    newCost: 1100,
     delta: 100,
     percentChange: 0.1,
     exceedsThreshold: false,
+    previousTotal: 1000,
+    newTotal: 1100,
     ...overrides,
   });
 
@@ -27,7 +27,7 @@ describe('CostDeltaIndicator', () => {
     });
 
     it('should display positive delta with plus sign', () => {
-      render(<CostDeltaIndicator costDeltaInfo={createCostDelta({ delta: 100 })} />);
+      render(<CostDeltaIndicator costDeltaInfo={createCostDelta({ delta: 100, percentChange: 0.1 })} />);
 
       // Should show +$100.00 and +10.0%
       expect(screen.getByText(/\+\$100\.00/)).toBeInTheDocument();
@@ -50,50 +50,48 @@ describe('CostDeltaIndicator', () => {
   });
 
   describe('Threshold Status', () => {
-    it('should show "Within threshold" message when not exceeded', () => {
+    it('should not show approval message when not exceeded', () => {
       render(
         <CostDeltaIndicator
           costDeltaInfo={createCostDelta({ exceedsThreshold: false })}
         />
       );
 
-      expect(screen.getByText(/within threshold/i)).toBeInTheDocument();
-      expect(screen.getByText(/no approval needed/i)).toBeInTheDocument();
+      expect(screen.queryByText(/requires approval/i)).not.toBeInTheDocument();
     });
 
-    it('should show "Exceeds threshold" message when exceeded', () => {
+    it('should show "Requires Approval" message when exceeded', () => {
       render(
         <CostDeltaIndicator
           costDeltaInfo={createCostDelta({ exceedsThreshold: true })}
         />
       );
 
-      expect(screen.getByText(/exceeds threshold/i)).toBeInTheDocument();
-      expect(screen.getByText(/approval required/i)).toBeInTheDocument();
+      expect(screen.getByText(/requires approval/i)).toBeInTheDocument();
     });
   });
 
   describe('Styling', () => {
-    it('should use primary styling when within threshold', () => {
+    it('should use green styling for positive delta', () => {
       const { container } = render(
         <CostDeltaIndicator
-          costDeltaInfo={createCostDelta({ exceedsThreshold: false })}
+          costDeltaInfo={createCostDelta({ delta: 100 })}
         />
       );
 
       const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper.className).toContain('border-primary');
+      expect(wrapper.className).toContain('bg-green');
     });
 
-    it('should use destructive styling when exceeds threshold', () => {
+    it('should use amber styling for negative delta', () => {
       const { container } = render(
         <CostDeltaIndicator
-          costDeltaInfo={createCostDelta({ exceedsThreshold: true })}
+          costDeltaInfo={createCostDelta({ delta: -100 })}
         />
       );
 
       const wrapper = container.firstChild as HTMLElement;
-      expect(wrapper.className).toContain('border-destructive');
+      expect(wrapper.className).toContain('bg-amber');
     });
   });
 

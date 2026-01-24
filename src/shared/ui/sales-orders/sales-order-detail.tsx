@@ -11,34 +11,34 @@
 
 import { useState } from "react"
 import { Edit, Download, ChevronDown, Phone, Mail, AlertCircle, FileText, MessageSquare, Zap, Sparkles, Truck, Package, CheckCircle2, AlertTriangle, History, X, ChevronsRight } from "lucide-react"
-import { ExpandableToolbar } from "@/components/ui/expandable-toolbar"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { ExpandableToolbar } from "@/shared/ui/expandable-toolbar"
+import { Button } from "@/shared/ui/button"
+import { Card } from "@/shared/ui/card"
+import { Badge } from "@/shared/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatTaxRateFromDecimal } from "@/lib/tax-config"
 
 // Reuse PO components
-import { FinancialBreakdown } from "@/components/financial-breakdown"
-import { FinancialsTab } from "@/components/financials-tab"
-import { QualityTab } from "@/components/quality-tab"
-import { ReceivingTab } from "@/components/receiving-tab"
-import { SOLineDisplaySelector } from "@/components/so-line-display-selector"
-import { SOLineStatusPill } from "@/components/so-line-status-pill"
-import { ActivityTimeline } from "@/components/activity-timeline"
-import { DocumentsPanel } from "@/components/documents-panel"
+import { FinancialBreakdown } from "@/shared/ui/financial-breakdown"
+import { FinancialsTab } from "@/shared/ui/financials-tab"
+import { QualityTab } from "@/shared/ui/quality-tab"
+import { ReceivingTab } from "@/shared/ui/receiving-tab"
+import { SOLineDisplaySelector } from "@/shared/ui/sales-orders/so-line-display-selector"
+import { SOLineStatusPill } from "@/shared/ui/sales-orders/so-line-status-pill"
+import { ActivityTimeline } from "@/shared/ui/activity-timeline"
+import { DocumentsPanel } from "@/shared/ui/documents/documents-panel"
 
 // SO-specific modals
-import { LineDetailModal } from "@/components/line-detail-modal"
-import { SOEditHeaderModal, type SOHeaderEditData } from "@/components/so-edit-header-modal"
-import { SOStatusSelect } from "@/components/so-status-select"
+import { LineDetailModal } from "@/shared/ui/modals/line-detail-modal"
+import { SOEditHeaderModal, type SOHeaderEditData } from "@/shared/ui/modals/so-edit-header-modal"
+import { SOStatusSelect } from "@/shared/ui/sales-orders/so-status-select"
 import { SalesOrderStatus } from "@/types/sales-order-status"
-import { SOEditLineModal, type SOLineEditData } from "@/components/so-edit-line-modal"
-import { SOCreateShipmentModal, type ShipmentData } from "@/components/so-create-shipment-modal"
-import { IssuesTab } from "@/components/issues-tab"
+import { SOEditLineModal, type SOLineEditData } from "@/shared/ui/modals/so-edit-line-modal"
+import { SOCreateShipmentModal, type ShipmentData } from "@/shared/ui/modals/so-create-shipment-modal"
+import { IssuesTab } from "@/shared/ui/issues/issues-tab"
 import { useIssuePanel } from "@/context/IssuePanelContext"
 import { useEmailContext } from "@/context/EmailContext"
-import { VoipCallModal } from "@/components/voip-call-modal"
+import { VoipCallModal } from "@/shared/ui/modals/voip-call-modal"
 
 // Reuse PO mock data structures and functions
 import {
@@ -49,7 +49,7 @@ import {
   type LineItem,
   type POCharge,
 } from "@/lib/mock-data"
-import { IssueCountBadge, LineIssuesBadge } from "@/components/issue-count-badge"
+import { IssueCountBadge, LineIssuesBadge } from "@/shared/ui/issues/issue-count-badge"
 
 // ============================================================================
 // CHANGE HISTORY TYPE
@@ -182,7 +182,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
 
   // Check if editing is allowed based on status
   const canEdit = orderStatus === SalesOrderStatus.Pending || orderStatus === SalesOrderStatus.Confirmed
-  const canEditLines = canEdit && orderStatus !== SalesOrderStatus.PartiallyShipped
+  const canEditLines = canEdit // Lines can be edited when order can be edited
 
   // Format currency
   const formatCurrency = (amount: number) =>
@@ -369,7 +369,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                         <div className="w-5 h-5 rounded bg-muted" />
                         <span>{item.name}</span>
                         {(() => {
-                          const lineIssues = soIssues.filter(i => i.lineNumber === item.lineNumber || i.sku === item.sku)
+                          const lineIssues = soIssues.filter(i => i.lineNumber === item.lineNumber)
                           if (lineIssues.length === 0) return null
                           return (
                             <LineIssuesBadge
@@ -531,7 +531,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                   <tr className="bg-muted/10">
                     <td colSpan={2} className="py-2 px-3 text-right text-xs text-muted-foreground font-medium">
                       Order Charges
-                      <span className="ml-2 font-normal">({financialsHeaderCharges.map(c => c.name).join(", ")})</span>
+                      <span className="ml-2 font-normal">({financialsHeaderCharges.map(c => c.description).join(", ")})</span>
                     </td>
                     <td className="py-2 px-3 text-right text-muted-foreground/50">—</td>
                     <td className="py-2 px-3 text-right text-muted-foreground/50">—</td>
@@ -999,7 +999,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                   </div>
                   <div>
                     <div className="text-muted-foreground">Required</div>
-                    <div className="text-foreground font-medium">{soHeader.dates.expectedCompletion}</div>
+                    <div className="text-foreground font-medium">{soHeader.dates.requested}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground">{SO_TERMINOLOGY.acknowledgeAction}</div>
@@ -1231,7 +1231,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground mb-1">{SO_TERMINOLOGY.internalOwner}</div>
-                        <div className="text-sm font-medium">{soHeader.buyer.name}</div>
+                        <div className="text-sm font-medium">{soHeader.buyer}</div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground mb-1">Ordered</div>
@@ -1244,7 +1244,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                           soHeader.urgency === "high" ? "bg-amber-100 text-amber-800" :
                           "bg-primary/10 text-primary"
                         }`}>
-                          {soHeader.urgency === "standard" ? "Normal" : soHeader.urgency.charAt(0).toUpperCase() + soHeader.urgency.slice(1)}
+                          {soHeader.urgency === "low" ? "Normal" : soHeader.urgency.charAt(0).toUpperCase() + soHeader.urgency.slice(1)}
                         </Badge>
                       </div>
                     </div>
@@ -1281,7 +1281,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                       <div className="grid grid-cols-4 gap-6">
                         <div>
                           <div className="text-xs text-muted-foreground mb-1">Ship To</div>
-                          <div className="text-sm">{soHeader.shipping.destination}</div>
+                          <div className="text-sm">{soHeader.vendorName || "—"}</div>
                         </div>
                         <div>
                           <div className="text-xs text-muted-foreground mb-1">Shipping Method</div>
@@ -1289,11 +1289,11 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
                         </div>
                         <div>
                           <div className="text-xs text-muted-foreground mb-1">Freight Terms</div>
-                          <div className="text-sm">{soHeader.shipping.terms}</div>
+                          <div className="text-sm">{soHeader.shipping.instructions || "—"}</div>
                         </div>
                         <div>
                           <div className="text-xs text-muted-foreground mb-1">Currency</div>
-                          <div className="text-sm">{soHeader.payment.currency}</div>
+                          <div className="text-sm">{soHeader.currency}</div>
                         </div>
                       </div>
                     </div>
@@ -1392,7 +1392,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
 
             {/* Shipping Tab */}
             {activeTab === "shipping" && (
-              <ReceivingTab lines={lines} poNumber={soHeader.poNumber} />
+              <ReceivingTab lineItems={lines} />
             )}
 
             {/* Issues Tab */}
@@ -1407,7 +1407,7 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
 
             {/* Quality Tab */}
             {activeTab === "quality" && (
-              <QualityTab lines={lines} poNumber={soHeader.poNumber} />
+              <QualityTab />
             )}
           </div>
         </div>
@@ -1564,8 +1564,8 @@ export function SalesOrderDetail({ soNumber }: SalesOrderDetailProps) {
       <VoipCallModal
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
-        vendorContact={customerContact}
-        poNumber={soNumber || soHeader.poNumber}
+        contact={customerContact}
+        orderNumber={soNumber || soHeader.poNumber}
         variant="so"
       />
     </div>

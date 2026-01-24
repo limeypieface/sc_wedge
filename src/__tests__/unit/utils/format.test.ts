@@ -75,28 +75,31 @@ describe('Format Utilities', () => {
   });
 
   describe('formatDate', () => {
+    // Use a date with time to avoid timezone ambiguity
+    const testDateString = '2026-01-15T12:00:00';
+    const testDate = new Date(2026, 0, 15); // Jan 15, 2026 in local timezone
+
     it('should format date string in medium format by default', () => {
-      const result = formatDate('2026-01-15');
+      const result = formatDate(testDateString);
       expect(result).toContain('Jan');
       expect(result).toContain('15');
       expect(result).toContain('2026');
     });
 
     it('should format Date object', () => {
-      const date = new Date('2026-01-15');
-      const result = formatDate(date);
+      const result = formatDate(testDate);
       expect(result).toContain('15');
     });
 
     it('should support short format', () => {
-      const result = formatDate('2026-01-15', 'short');
+      const result = formatDate(testDateString, 'short');
       // Short format: 1/15/26 or similar
       expect(result).toContain('1');
       expect(result).toContain('15');
     });
 
     it('should support full format', () => {
-      const result = formatDate('2026-01-15', 'full');
+      const result = formatDate(testDateString, 'full');
       // Full format includes day of week
       expect(result.length).toBeGreaterThan(10);
     });

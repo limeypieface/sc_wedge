@@ -8,8 +8,17 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AuthProvider } from '../contexts/AuthContext';
-import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
+import { vi } from 'vitest';
+
+// Mock provider components for testing
+const MockAuthProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const MockFeatureFlagsProvider = ({
+  children,
+  initialOverrides: _initialOverrides
+}: {
+  children: React.ReactNode;
+  initialOverrides?: Record<string, boolean>;
+}) => <>{children}</>;
 
 // ============================================================================
 // CUSTOM RENDER WITH PROVIDERS
@@ -54,14 +63,14 @@ export function renderWithProviders(
 
     if (withFeatureFlags) {
       element = (
-        <FeatureFlagsProvider initialOverrides={featureFlagOverrides}>
+        <MockFeatureFlagsProvider initialOverrides={featureFlagOverrides}>
           {element}
-        </FeatureFlagsProvider>
+        </MockFeatureFlagsProvider>
       );
     }
 
     if (withAuth) {
-      element = <AuthProvider>{element}</AuthProvider>;
+      element = <MockAuthProvider>{element}</MockAuthProvider>;
     }
 
     return element;
@@ -375,11 +384,8 @@ export function suppressConsoleErrors(): () => void {
 /**
  * Creates a mock function that tracks calls and can be configured.
  */
-export function createMockFn<T extends (...args: unknown[]) => unknown>(): jest.Mock<
-  ReturnType<T>,
-  Parameters<T>
-> {
-  return jest.fn() as jest.Mock<ReturnType<T>, Parameters<T>>;
+export function createMockFn<T extends (...args: unknown[]) => unknown>() {
+  return vi.fn() as ReturnType<typeof vi.fn>;
 }
 
 // ============================================================================

@@ -31,10 +31,10 @@ import {
   poHeader as mockPOHeader,
   lineItems as mockLineItems,
   poCharges as mockCharges,
-  poDiscounts as mockDiscounts,
   vendorContact as mockVendorContact,
   computePOTotals,
 } from "@/lib/mock-data";
+import { poDiscounts as mockDiscounts } from "../_lib/mock-data";
 
 // ============================================================================
 // QUERY RESULT TYPES
@@ -113,14 +113,14 @@ export async function fetchPurchaseOrder(
   }
 
   // Compute totals
-  const totals = computePOTotals(mockCharges);
+  const totals = computePOTotals(mockLineItems, mockCharges);
 
   return {
     purchaseOrder: {
-      header: mockPOHeader as POHeader,
+      header: mockPOHeader as unknown as POHeader,
       lineItems: mockLineItems as unknown as LineItem[],
-      charges: mockCharges as POCharge[],
-      discounts: mockDiscounts as PODiscount[],
+      charges: mockCharges as unknown as POCharge[],
+      discounts: mockDiscounts as unknown as PODiscount[],
       totals: {
         subtotal: totals.subtotal,
         totalCharges: totals.charges.total,
@@ -128,7 +128,7 @@ export async function fetchPurchaseOrder(
         taxAmount: totals.totalTax,
         grandTotal: totals.grandTotal,
       },
-      vendorContact: mockVendorContact,
+      vendorContact: mockVendorContact as unknown as VendorContact,
     },
   };
 }
@@ -147,7 +147,7 @@ export async function fetchPurchaseOrderHeader(
     throw new Error(`Purchase Order ${poNumber} not found`);
   }
 
-  return mockPOHeader as POHeader;
+  return mockPOHeader as unknown as POHeader;
 }
 
 /**
@@ -177,7 +177,7 @@ export async function fetchCharges(poNumber: string): Promise<POCharge[]> {
     throw new Error(`Purchase Order ${poNumber} not found`);
   }
 
-  return mockCharges as POCharge[];
+  return mockCharges as unknown as POCharge[];
 }
 
 /**
@@ -194,7 +194,7 @@ export async function fetchVendorContact(
     throw new Error(`Purchase Order ${poNumber} not found`);
   }
 
-  return mockVendorContact;
+  return mockVendorContact as unknown as VendorContact;
 }
 
 // ============================================================================

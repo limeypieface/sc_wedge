@@ -231,7 +231,7 @@ export function recordVote(
   const newStages = processResult.value;
 
   // Determine new status
-  let newStatus = instance.status;
+  let newStatus: ApprovalStatus = instance.status;
   let auditAction: AuditAction = "voted";
 
   if (allStagesApproved(newStages)) {

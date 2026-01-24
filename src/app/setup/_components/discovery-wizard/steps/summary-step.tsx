@@ -26,10 +26,10 @@ export function SummaryStep() {
       {/* Heading */}
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Here's what I've learned
+          Here&apos;s what I&apos;ve learned
         </h1>
         <p className="text-muted-foreground">
-          Based on your answers, I've tailored the configuration to match your
+          Based on your answers, I&apos;ve tailored the configuration to match your
           operations.
         </p>
       </div>
@@ -122,9 +122,9 @@ export function SummaryStep() {
         <div className="flex items-start gap-3">
           <Settings className="w-5 h-5 text-muted-foreground mt-0.5" />
           <div>
-            <p className="text-sm font-medium">What's next?</p>
+            <p className="text-sm font-medium">What&apos;s next?</p>
             <p className="text-sm text-muted-foreground mt-1">
-              I'll show you the recommended configuration with all the details.
+              I&apos;ll show you the recommended configuration with all the details.
               You can review and adjust any settings before going live.
             </p>
           </div>

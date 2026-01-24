@@ -3,7 +3,7 @@ import {
   getStatusIcon,
   createStatusStageMapping,
   type StatusStage,
-} from "@/lib/ui/status-icons";
+} from "@/shared/ui/icons/status-icons";
 
 // Define the SO line item status enum (outbound/shipping focused)
 export enum SOLineItemStatus {

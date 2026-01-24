@@ -42,3 +42,16 @@ export interface CurrentUser {
   approverLevel?: number;
   approvalLimit: number;
 }
+
+// Approval cycle for tracking submission/review iterations
+export interface ApprovalCycle {
+  id: string;
+  cycleNumber: number;
+  outcome: "pending" | "approved" | "rejected" | "changes_requested";
+  submittedAt: string;
+  submissionNotes?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  feedback?: string;
+  resolution?: string;
+}

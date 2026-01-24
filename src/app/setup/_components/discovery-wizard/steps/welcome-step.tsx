@@ -15,10 +15,10 @@ export function WelcomeStep() {
       {/* Greeting */}
       <div className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Let's set up your procurement system
+          Let&apos;s set up your procurement system
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed">
-          I'll ask a few questions to understand your operations, then configure
+          I&apos;ll ask a few questions to understand your operations, then configure
           the system to match how you work. This takes about 2 minutes.
         </p>
       </div>
@@ -26,7 +26,7 @@ export function WelcomeStep() {
       {/* What we'll cover */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          What we'll cover
+          What we&apos;ll cover
         </h2>
         <div className="grid gap-4">
           <FeatureItem
@@ -47,7 +47,7 @@ export function WelcomeStep() {
           <FeatureItem
             icon={Zap}
             title="Smart defaults"
-            description="I'll recommend settings based on your answers"
+            description="I&apos;ll recommend settings based on your answers"
           />
         </div>
       </div>
@@ -55,8 +55,8 @@ export function WelcomeStep() {
       {/* Reassurance */}
       <div className="p-4 bg-muted/50 rounded-lg">
         <p className="text-sm text-muted-foreground">
-          Don't worry about getting everything perfect—you can always adjust
-          settings later. I'll explain each option as we go.
+          Don&apos;t worry about getting everything perfect—you can always adjust
+          settings later. I&apos;ll explain each option as we go.
         </p>
       </div>
     </div>

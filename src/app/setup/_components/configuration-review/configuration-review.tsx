@@ -28,7 +28,7 @@ import {
   CardTitle,
   Badge,
   Separator,
-} from "@/components/ui";
+} from "@/shared/ui";
 import { useConfiguration, useRecommendations, type ConfigSection } from "@/lib/contexts";
 import { cn } from "@/lib/utils";
 

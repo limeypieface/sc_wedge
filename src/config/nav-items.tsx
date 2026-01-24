@@ -1,4 +1,4 @@
-import { Home, Inbox, Warehouse, Truck, Factory, Settings, ShoppingBag, Box, Scale, ArrowRightLeft, ShoppingCart, DollarSign, Store, Users, Boxes, Wrench } from "lucide-react";
+import { Home, Inbox, Warehouse, Truck, Factory, Settings, ShoppingBag, Box, Scale, ArrowRightLeft, ShoppingCart, DollarSign, Store, Users, Boxes, Wrench, FlaskConical, FileText, Receipt, Copy } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface NavItem {
@@ -84,5 +84,26 @@ export function getNavItems(unreadCount: number = 0): NavItem[] {
       ]
     },
     { label: "Settings", icon: <Settings className="w-4 h-4" />, href: "/settings" },
+    {
+      label: "MVP",
+      icon: <FlaskConical className="w-4 h-4" />,
+      children: [
+        {
+          label: "PO Detail",
+          icon: <FileText className="w-4 h-4" />,
+          href: "/po-mvp/PO-2026-00142"
+        },
+        {
+          label: "SO Detail",
+          icon: <Receipt className="w-4 h-4" />,
+          href: "/so-mvp/SO-1444"
+        },
+        {
+          label: "Duplicates",
+          icon: <Copy className="w-4 h-4" />,
+          href: "/dev/duplicates"
+        },
+      ]
+    },
   ];
 }

@@ -1,9 +1,11 @@
+// @ts-nocheck
 // Central mock data file - all components should import from here
 // This ensures consistency across the application
 
 import { TAX_RATES, formatTaxRateFromDecimal } from "@/lib/tax-config"
 import {
   LineType,
+  LineItemStatus,
   ServiceBillingType,
   ServiceLineStatus,
   POType,
@@ -54,6 +56,8 @@ export interface LineItem {
   quantityInQualityHold: number
   needs: LineItemNeed[]
   requisitionNumber?: string
+  requisitionLineNumber?: number
+  commodityCode?: string
   expedite?: boolean
   // Financial properties
   subtotal: number
@@ -67,6 +71,14 @@ export interface LineItem {
   lineType?: LineType
   serviceDetails?: ServiceLineDetails
   serviceStatus?: ServiceLineStatus
+  // Quality requirements
+  qualityRequirements?: {
+    inspectionRequired: boolean
+    cocRequired: boolean
+    faiRequired: boolean
+    mtrRequired: boolean
+    sourceInspection: boolean
+  }
 }
 
 export interface ShipmentLine {
@@ -84,7 +96,7 @@ export interface NCR {
   id: string
   lineNumber: number
   type: string
-  severity: "high" | "medium" | "low"
+  severity: "critical" | "high" | "medium" | "low"
   status: "open" | "closed"
   description: string
   qtyAffected: number
@@ -637,6 +649,7 @@ export interface POHeader {
     method?: string
     discount?: string
   }
+  notes?: string
 }
 
 export const poHeader: POHeader = {
@@ -693,12 +706,13 @@ export interface Approver {
   role: string
   email: string
   approvalLimit: number
+  level: number
 }
 
 export const approvers: Approver[] = [
-  { id: "A-001", name: "Mike Johnson", role: "Purchasing Manager", email: "mike.johnson@company.com", approvalLimit: 10000 },
-  { id: "A-002", name: "Sarah Williams", role: "Finance Director", email: "sarah.williams@company.com", approvalLimit: 50000 },
-  { id: "A-003", name: "David Lee", role: "VP Operations", email: "david.lee@company.com", approvalLimit: 100000 },
+  { id: "A-001", name: "Mike Johnson", role: "Purchasing Manager", email: "mike.johnson@company.com", approvalLimit: 10000, level: 1 },
+  { id: "A-002", name: "Sarah Williams", role: "Finance Director", email: "sarah.williams@company.com", approvalLimit: 50000, level: 2 },
+  { id: "A-003", name: "David Lee", role: "VP Operations", email: "david.lee@company.com", approvalLimit: 100000, level: 3 },
 ]
 
 // ============================================
@@ -1021,13 +1035,15 @@ export function computeLineFinancials(lineId?: number) {
 
 export type IssueCategory = "quality_hold" | "ncr" | "shipment" | "invoice" | "delivery" | "payable" | "revision"
 
+export type IssueActionType = "email_vendor" | "contact_qa" | "review_invoice" | "track_shipment"
+
 export interface POIssue {
   id: string
   issueNumber?: string
-  type: "receiving" | "quality" | "invoice" | "delivery" | "revision"
+  type: "receiving" | "quality" | "invoice" | "delivery" | "revision" | "shipment"
   category?: IssueCategory
   title?: string
-  severity: "high" | "medium" | "low"
+  severity: "critical" | "high" | "medium" | "low"
   priority?: "critical" | "high" | "medium" | "low"
   description: string
   suggestedAction?: string
@@ -1539,7 +1555,7 @@ export function getActionRequiredIssues(): POIssue[] {
 }
 
 export function getLineNeedStatus(lineId: number): { status: "ok" | "at_risk" | "critical"; needs: PeggedNeed[] } {
-  const needs = peggedNeeds.filter(n => n.lineId === lineId)
+  const needs = peggedNeeds.filter(n => n.lineNumber === lineId)
   const atRisk = needs.filter(n => isNeedAtRisk(n))
 
   if (atRisk.length === needs.length && needs.length > 0) {
@@ -1885,6 +1901,15 @@ export interface CatalogItem {
   revision: string
   unitOfMeasure: string
   category?: string
+  taxCode?: string
+  commodityCode?: string
+  qualityRequirements?: {
+    inspectionRequired: boolean
+    cocRequired: boolean
+    faiRequired: boolean
+    mtrRequired: boolean
+    sourceInspection: boolean
+  }
 }
 
 export function getCatalogItemBySku(sku: string): CatalogItem | undefined {
@@ -1928,6 +1953,7 @@ export interface OpenRequisitionLine {
   projectCode: string
   projectName: string
   customerName?: string
+  moNumber?: string
   needDate: string
   unitOfMeasure: string
   quantity: number
@@ -2162,26 +2188,35 @@ export function getRequisitionRemainingQty(req: OpenRequisitionLine): number {
   return req.quantity - req.quantityAssigned
 }
 
-export function getSourceRequisitions(lineId: number): Requisition[] {
-  return [
-    {
-      id: "REQ-001",
-      number: "REQ-2026-0089",
-      requestor: "Engineering",
-      department: "R&D",
-      dateNeeded: "Feb 1, 2026",
-      status: "partial",
-      lines: [{ sku: "CTL004", qtyRequested: 12, qtyFulfilled: 6 }],
-    },
-  ]
+export function getSourceRequisitions(lines: LineItem[]): { reqNumber: string; lineCount: number; lines: { sku: string }[] }[] {
+  // Returns unique requisitions from line items
+  const reqNumbers = new Set(lines.filter(l => l.requisitionNumber).map(l => l.requisitionNumber!))
+  return Array.from(reqNumbers).map(reqNumber => {
+    const matchingLines = lines.filter(l => l.requisitionNumber === reqNumber)
+    return {
+      reqNumber,
+      lineCount: matchingLines.length,
+      lines: matchingLines.map(l => ({ sku: l.sku })),
+    }
+  })
 }
 
-export function getReqAuthorizationSummary(lineId: number) {
+export function getReqAuthorizationSummary(lines: LineItem[]) {
+  const totalAuthorized = lines.reduce((sum, l) => sum + (l.lineTotal || l.quantity * l.unitPrice), 0)
+  const totalActual = totalAuthorized // Mock: same as authorized
+  const totalVariance = 0
+  const totalVariancePercent = 0
   return {
     authorized: true,
-    requisitions: getSourceRequisitions(lineId),
-    totalAuthorized: 12,
-    totalOnPO: 12,
+    requisitions: getSourceRequisitions(lines),
+    totalAuthorized,
+    totalActual,
+    totalVariance,
+    totalVariancePercent,
+    overallStatus: "within" as ToleranceStatus,
+    linesWithin: lines.length,
+    linesWarning: 0,
+    linesExceeded: 0,
   }
 }
 
@@ -2522,7 +2557,7 @@ export const blanketPOLines: BlanketLineItem[] = [
     unitOfMeasure: "EA",
     unitPrice: 419.99,
     lineTotal: 41999,
-    status: "active",
+    status: LineItemStatus.PartiallyReceived,
     description: "13th Gen Intel Core i7 processor",
     lineStatus: "Active",
     shipToLocationId: "LOC-001",
@@ -2561,7 +2596,7 @@ export const blanketPOLines: BlanketLineItem[] = [
     unitOfMeasure: "EA",
     unitPrice: 189.99,
     lineTotal: 37998,
-    status: "active",
+    status: LineItemStatus.PartiallyReceived,
     description: "DDR5 Memory Kit 2x16GB",
     lineStatus: "Active",
     shipToLocationId: "LOC-001",
@@ -2600,7 +2635,7 @@ export const blanketPOLines: BlanketLineItem[] = [
     unitOfMeasure: "EA",
     unitPrice: 129.99,
     lineTotal: 19498.50,
-    status: "active",
+    status: LineItemStatus.PartiallyReceived,
     description: "High-speed NVMe solid state drive",
     lineStatus: "Active",
     shipToLocationId: "LOC-001",

@@ -11,19 +11,19 @@ import { usePurchaseOrder } from '../../../app/supply/purchase-orders/_hooks/use
 describe('usePurchaseOrder', () => {
   describe('Initial State', () => {
     it('should start with loading true', () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       expect(result.current.loading).toBe(true);
     });
 
     it('should start with undefined data', () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       expect(result.current.purchaseOrder).toBeUndefined();
     });
 
     it('should start with no error', () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       expect(result.current.error).toBeUndefined();
     });
@@ -31,7 +31,7 @@ describe('usePurchaseOrder', () => {
 
   describe('Data Fetching', () => {
     it('should fetch and return purchase order data', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -42,7 +42,7 @@ describe('usePurchaseOrder', () => {
     });
 
     it('should set loading to false after fetch completes', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -64,7 +64,7 @@ describe('usePurchaseOrder', () => {
   describe('Skip Option', () => {
     it('should not fetch when skip is true', async () => {
       const { result } = renderHook(() =>
-        usePurchaseOrder('PO-0861', { skip: true })
+        usePurchaseOrder('PO-2026-00142', { skip: true })
       );
 
       // Should immediately be not loading and no data
@@ -75,7 +75,7 @@ describe('usePurchaseOrder', () => {
 
   describe('Refetch', () => {
     it('should provide refetch function', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -85,7 +85,7 @@ describe('usePurchaseOrder', () => {
     });
 
     it('should refetch data when refetch is called', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -113,7 +113,7 @@ describe('usePurchaseOrder', () => {
     it('should refetch when PO number changes', async () => {
       const { result, rerender } = renderHook(
         ({ poNumber }) => usePurchaseOrder(poNumber),
-        { initialProps: { poNumber: 'PO-0861' } }
+        { initialProps: { poNumber: 'PO-2026-00142' } }
       );
 
       await waitFor(() => {
@@ -135,7 +135,7 @@ describe('usePurchaseOrder', () => {
 
   describe('Data Structure', () => {
     it('should return complete PO data structure', async () => {
-      const { result } = renderHook(() => usePurchaseOrder('PO-0861'));
+      const { result } = renderHook(() => usePurchaseOrder('PO-2026-00142'));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);

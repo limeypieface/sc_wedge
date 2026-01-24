@@ -63,11 +63,12 @@ export function formatDate(
 ): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  const options: Intl.DateTimeFormatOptions = {
-    full: { weekday: "long", year: "numeric", month: "long", day: "numeric" },
-    medium: { year: "numeric", month: "short", day: "numeric" },
-    short: { year: "2-digit", month: "numeric", day: "numeric" },
-  }[format];
+  const optionsMap = {
+    full: { weekday: "long" as const, year: "numeric" as const, month: "long" as const, day: "numeric" as const },
+    medium: { year: "numeric" as const, month: "short" as const, day: "numeric" as const },
+    short: { year: "2-digit" as const, month: "numeric" as const, day: "numeric" as const },
+  };
+  const options: Intl.DateTimeFormatOptions = optionsMap[format];
 
   return dateObj.toLocaleDateString("en-US", options);
 }

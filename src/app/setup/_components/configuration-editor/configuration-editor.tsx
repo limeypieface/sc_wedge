@@ -8,7 +8,7 @@
  */
 
 import { ArrowLeft, Save } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "@/shared/ui";
 import { useConfiguration, type ConfigSection } from "@/lib/contexts";
 
 import { ApprovalEditor } from "./sections/approval-editor";

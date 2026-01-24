@@ -11,7 +11,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
-import { Button, Progress } from "@/components/ui";
+import { Button, Progress } from "@/shared/ui";
 import { useDiscovery } from "@/lib/contexts";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ const pageVariants = {
 };
 
 const pageTransition = {
-  type: "tween",
+  type: "tween" as const,
   duration: 0.2,
 };
 
@@ -149,7 +149,7 @@ export function DiscoveryWizard() {
                 </>
               ) : isWelcome ? (
                 <>
-                  Let's Get Started
+                  Let&apos;s Get Started
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               ) : (
